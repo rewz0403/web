@@ -1,0 +1,32 @@
+<div id="main-content">
+    <h2>สถานะการชำระเงิน Omise</h2>
+    <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-end; flex-wrap: wrap;">
+        <div class="form-group" style="margin-bottom: 0;">
+            <label for="startDate">จากวันที่:</label>
+            <input type="date" id="startDate" class="date-input">
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <label for="endDate">ถึงวันที่:</label>
+            <input type="date" id="endDate" class="date-input">
+        </div>
+        <button id="filterOmiseBtn" class="button" style="padding: 8px 12px; width: auto;">ค้นหาข้อมูล</button>
+        <button id="clearFilterOmiseBtn" class="button" style="background-color: #f0ad4e; padding: 8px 12px; width: auto;">ลบการค้นหา</button>
+    </div>
+    <div id="paymentSummary" style="margin-bottom: 20px; font-weight: bold; color: #555;"></div>
+    <div class="table-responsive">
+        <table id="paymentTable">
+            <thead>
+                <tr>
+                    <th>Charge ID</th>
+                    <th>อีเมล</th>
+                    <th>แพ็คเกจ</th>
+                    <th>จำนวนเงิน (บาท)</th>
+                    <th>สถานะ</th>
+                    <th>วันที่ชำระเงิน</th>
+                </tr>
+            </thead>
+            <tbody id="paymentTableBody">
+                </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>เพิ่มผู้ดูแลระบบ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f9fafc;
+      margin: 0;
+      padding: 40px;
+      color: #333;
+    }
+
+    .form-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 26px;
+      color: #1e88e5;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      transition: border-color 0.2s;
+    }
+
+    input:focus {
+      border-color: #1e88e5;
+      outline: none;
+    }
+
+    .button {
+      width: 100%;
+      padding: 14px;
+      background-color: #1e88e5;
+      border: none;
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .button:hover:not(:disabled) {
+      background-color: #1565c0;
+    }
+
+    .alert {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 5px;
+      font-weight: 600;
+    }
+
+    .alert-success {
+      background-color: #e0f7fa;
+      color: #006064;
+    }
+
+    .alert-error {
+      background-color: #ffebee;
+      color: #c62828;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h2>เพิ่มผู้ดูแลระบบ</h2>
+
+    <div class="form-group">
+      <label for="email">อีเมล</label>
+      <input type="email" id="email" placeholder="admin@example.com" />
+    </div>
+
+    <div class="form-group">
+      <label for="password">รหัสผ่าน</label>
+      <input type="password" id="password" placeholder="••••••••" />
+    </div>
+
+    <div class="form-group">
+      <label for="rePassword">ยืนยันรหัสผ่าน</label>
+      <input type="password" id="rePassword" placeholder="••••••••" />
+    </div>
+
+    <div class="form-group">
+      <label for="firstName">ชื่อ</label>
+      <input type="text" id="firstName" placeholder="ชื่อจริง" />
+    </div>
+
+    <div class="form-group">
+      <label for="lastName">นามสกุล</label>
+      <input type="text" id="lastName" placeholder="นามสกุล" />
+    </div>
+
+    <button class="button" id="createBtn">สร้างผู้ดูแลระบบ</button>
+
+    <div id="alertBox"></div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC6oAJBTA4gROSlMspf08RXuIS2zlvKbOw",
+      authDomain: "access-able-demo.firebaseapp.com",
+      databaseURL: "https://access-able-demo-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "access-able-demo",
+      storageBucket: "access-able-demo.appspot.com",
+      messagingSenderId: "973291779516",
+      appId: "1:973291779516:web:4263a29f32ba7ab731e7b9",
+      measurementId: "G-8KLJC4L6C3"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    const createBtn = document.getElementById('createBtn');
+    const alertBox = document.getElementById('alertBox');
+
+    createBtn.addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const rePassword = document.getElementById('rePassword').value;
+      const firstName = document.getElementById('firstName').value.trim();
+      const lastName = document.getElementById('lastName').value.trim();
+
+      alertBox.innerHTML = '';
+
+      if (!email || !password || !rePassword || !firstName || !lastName) {
+        showAlert('กรุณากรอกข้อมูลให้ครบทุกช่อง', false);
+        return;
+      }
+
+      if (password !== rePassword) {
+        showAlert('รหัสผ่านไม่ตรงกัน', false);
+        return;
+      }
+
+      createBtn.disabled = true;
+      createBtn.textContent = 'กำลังดำเนินการ...';
+
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+
+        await db.collection('AdminProfile').doc(user.uid).set({
+          firstName,
+          lastName,
+          email,
+          role: 'admin',
+        });
+
+        await db.collection('User').doc(user.uid).set({
+          email,
+          uid: user.uid,
+          role: 'admin'
+        });
+
+        showAlert('สร้างผู้ดูแลระบบเรียบร้อยแล้ว', true);
+      } catch (err) {
+        console.error('Error:', err);
+        showAlert('เกิดข้อผิดพลาดในการสร้างบัญชี', false);
+      } finally {
+        createBtn.disabled = false;
+        createBtn.textContent = 'สร้างผู้ดูแลระบบ';
+      }
+    });
+
+    function showAlert(message, isSuccess) {
+      alertBox.innerHTML = `<div class="alert ${isSuccess ? 'alert-success' : 'alert-error'}">${message}</div>`;
+    }
+  </script>
+</body>
+</html>

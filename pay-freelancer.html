@@ -1,0 +1,132 @@
+<div id="main-content">
+    <h2><i class="mdi mdi-cash-multiple"></i> จ่ายเงินให้ผู้หางาน</h2>
+
+    <div id="loading" style="text-align: center; padding: 20px; font-size: 1.2em; color: #555;">
+        กำลังโหลดข้อมูลงานที่สำเร็จ...
+    </div>
+
+    <div id="jobListContainer">
+    <div class="table-scroll-container">
+        <table id="payFreelancerTable">
+            <thead>
+                <tr>
+                    <th>ชื่อฟรีแลนซ์</th>
+                    <th>Order ID</th>
+                    <th>สถานะ</th>
+                    <th>ราคาก่อนหัก</th>
+                    <th>ค่าธรรมเนียม</th>
+                    <th>ราคาที่จ่าย</th>
+                    <th>วันที่สร้าง</th>
+                    <th>วันที่จ่าย</th>
+                    <th>ธนาคาร</th>
+                    <th>เลขบัญชี</th>
+                    <th>ดำเนินการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+<style>
+    /* Modal Styles (add this to your main <style> in index.html or a separate CSS file) */
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1000; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal.open {
+        display: flex;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: auto;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        width: 90%;
+        max-width: 500px;
+        position: relative;
+        animation-name: animatetop;
+        animation-duration: 0.4s;
+    }
+
+    @keyframes animatetop {
+        from {top: -300px; opacity: 0}
+        to {top: 0; opacity: 1}
+    }
+
+    .close-button {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        position: absolute;
+        top: 10px;
+        right: 20px;
+        cursor: pointer;
+    }
+
+    .close-button:hover,
+    .close-button:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .modal-content h3 {
+        text-align: center;
+        color: #1e88e5;
+        margin-bottom: 20px;
+    }
+
+    .modal-content p {
+        margin-bottom: 15px;
+        line-height: 1.5;
+    }
+
+    .modal-content strong {
+        color: #333;
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 30px;
+        gap: 10px;
+    }
+
+    .modal-actions .button {
+        flex: 1;
+        padding: 12px 20px;
+        font-size: 16px;
+        border-radius: 8px;
+        transition: background-color 0.2s;
+    }
+
+    .modal-actions .button-secondary {
+        background-color: #ccc;
+        color: #333;
+    }
+
+    .modal-actions .button-secondary:hover {
+        background-color: #bbb;
+    }
+
+    .alert-container {
+        margin-top: 20px;
+    }
+</style>

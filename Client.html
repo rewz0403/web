@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>รายชื่อผู้จ้างงาน</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #1e88e5;
+      color: white;
+    }
+  </style>
+  <!-- Firebase CDN -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+</head>
+<body>
+<div id="main-content">
+<h1>รายชื่อลูกค้าผู้จ้างงาน</h1>
+<div id="loading">กำลังโหลดข้อมูล...</div>
+<table id="clientTable" style="display:none;">
+  <thead>
+    <tr>
+      <th>ชื่อ</th>
+      <th>นามสกุล</th>
+      <th>เบอร์โทรศัพท์</th>
+      <th>ชื่อธนาคาร</th>
+      <th>เลขบัญชี</th>
+    </tr>
+  </thead>
+  <tbody id="clientBody"></tbody>
+</table>
+</div>  
+<script>
+  // Firebase config (แก้เป็น config ของคุณเอง)
+  const firebaseConfig = {
+    apiKey: "AIzaSyC6oAJBTA4gROSlMspf08RXuIS2zlvKbOw",
+    authDomain: "access-able-demo.firebaseapp.com",
+    databaseURL: "https://access-able-demo-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "access-able-demo",
+    storageBucket: "access-able-demo.appspot.com",
+    messagingSenderId: "973291779516",
+    appId: "1:973291779516:web:4263a29f32ba7ab731e7b9",
+    measurementId: "G-8KLJC4L6C3"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+
+  async function loadClients() {
+    const tbody = document.getElementById('clientBody');
+    const table = document.getElementById('clientTable');
+    const loading = document.getElementById('loading');
+
+    try {
+      const snapshot = await db.collection('ClientProfile').get();
+
+      if (snapshot.empty) {
+        loading.textContent = 'ไม่พบข้อมูลลูกค้า';
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td>${data.firstName || '-'}</td>
+          <td>${data.lastName || '-'}</td>
+          <td>${data.phone || '-'}</td>
+          <td>${data.bankName || '-'}</td>
+          <td>${data.accountNumber || '-'}</td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      loading.style.display = 'none';
+      table.style.display = 'table';
+
+    } catch (error) {
+      loading.textContent = 'เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + error.message;
+      console.error('Error loading clients:', error);
+    }
+  }
+
+  loadClients();
+  document.addEventListener('DOMContentLoaded', loadEmployerData);
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,2015 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AccessAble</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: linear-gradient(90deg, #3949ab, #1e88e5);
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            color: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .header-title { font-weight: 700; font-size: 22px; }
+        .container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 60px);
+            background: #fff;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #1e88e5;
+            display: flex;
+            flex-direction: column;
+            padding-top: 20px;
+            flex-shrink: 0;
+            position: relative;
+        }
+        .sidebar .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 30px;
+            color: #cce4ff;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            border-left: 4px solid transparent;
+        }
+        .sidebar .menu-item:hover { background-color: rgba(255,255,255,0.15); color: #fff; }
+        .sidebar .menu-item.active {
+            background-color: #1565c0;
+            color: #fff;
+            border-left-color: #ffc107;
+        }
+        .sidebar .menu-item i { font-size: 22px; }
+        .content {
+            flex: 1;
+            padding: 40px 50px;
+            overflow-y: auto;
+            font-size: 18px;
+            color: #222;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #1e88e5;
+            color: white;
+        }
+        /* Styles for Export Excel button */
+        .export-btn {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            float: right;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .export-btn:hover {
+            background-color: #45a049;
+        }
+        /* End of Export Excel button styles */
+
+        /* Styles for AddAdmin page */
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        }
+        .form-container h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 26px;
+            color: #1e88e5;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-container label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .form-container input {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            transition: border-color 0.2s;
+        }
+        .form-container input:focus {
+            border-color: #1e88e5;
+            outline: none;
+        }
+        .form-container .button {
+            width: 100%;
+            padding: 14px;
+            background-color: #1e88e5;
+            border: none;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .form-container .button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .form-container .button:hover:not(:disabled) {
+            background-color: #1565c0;
+        }
+        .alert {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+        .alert-success {
+            background-color: #e0f7fa;
+            color: #006064;
+        }
+        .alert-error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .pay-button {
+            background-color: #1e88e5;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+        }
+        .pay-button:hover {
+            background-color: #1565c0;
+        }
+        /* Modal styles */
+        .payment-modal { /* Reused for refund approval modal */
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .payment-modal.open {
+            display: flex;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Styles for Refund Page specifically */
+        .refunds-table-container {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-top: 30px;
+        }
+        .refunds-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .refunds-table th, .refunds-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .refunds-table th {
+            background-color: #f2f2f2;
+            color: #555;
+            font-weight: 600;
+        }
+        .refunds-table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .refunds-table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+        .no-data-message {
+            text-align: center;
+            color: #777;
+            padding: 20px;
+            font-style: italic;
+        }
+        /* Loading and error states */
+        .loading-text { color: #999; }
+        .error-text { color: #d32f2f; }
+        .approve-refund-btn {
+            background-color: #28a745; /* Green for approve */
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+        }
+        .approve-refund-btn:hover {
+            background-color: #218838;
+        }
+        .approve-refund-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Responsive styles */
+        #logoutBtn {
+            background: #ffc107;
+            border: none;
+            color: #333;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100px;
+            height: 40px;
+            transition: background-color 0.3s ease;
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            padding: 0;
+            line-height: 40px;
+        }
+
+        #logoutBtn:hover {
+            background-color: #e0a800;
+        }
+
+        /* NEW: Chart Container Styles */
+        #paymentChartContainer {
+    width: 900px; /* ปรับความกว้างเป็นค่าคงที่ */
+    height: 300px;
+    margin: 30px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+        .chart-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .chart-controls button {
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 20px;
+            border: 1px solid #1e88e5;
+            background-color: #fff;
+            color: #1e88e5;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .chart-controls button:hover {
+            background-color: #e3f2fd;
+        }
+        
+        .chart-controls button.active {
+            background-color: #1e88e5;
+            color: #fff;
+            font-weight: 600;
+        }
+
+
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            .sidebar {
+                width: 100%;
+                flex-direction: row;
+                overflow-x: auto;
+                justify-content: flex-start;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                height: auto;
+                position: static;
+            }
+            .sidebar .menu-item {
+                flex-shrink: 0;
+                justify-content: center;
+                font-size: 14px;
+                border-left: none;
+                border-bottom: 3px solid transparent;
+                padding: 10px 15px;
+            }
+            .sidebar .menu-item.active {
+                border-bottom-color: #ffc107;
+                background-color: transparent;
+            }
+            .sidebar .menu-item i {
+                display: block;
+                margin-bottom: 5px;
+            }
+            #logoutBtn {
+                position: static;
+                margin: 10px auto;
+                width: 120px;
+                transform: none;
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-title">AccessAble</div>
+        <i class="mdi mdi-account-circle" style="font-size: 36px;"></i>
+    </div>
+
+    <div class="container">
+        <nav class="sidebar">
+            <div class="menu-item active" data-page="main"><i class="mdi mdi-home"></i>หน้าหลัก</div>
+            <div class="menu-item" data-page="jobseeker"><i class="mdi mdi-account-group"></i>รายชื่อผู้หางาน</div>
+            <div class="menu-item" data-page="Client"><i class="mdi mdi-briefcase"></i>รายชื่อผู้จ้างงาน</div>
+            <div class="menu-item" data-page="training"><i class="mdi mdi-school"></i>หน่วยงานฝึกอบรม</div>
+            <div class="menu-item" data-page="omise"><i class="mdi mdi-credit-card-check"></i>สถานะการชำระเงิน Omise</div>
+            <div class="menu-item" data-page="pay-freelancer"><i class="mdi mdi-cash-multiple"></i>จ่ายเงินให้ผู้หางาน</div>
+            <div class="menu-item" data-page="AddAdmin"><i class="mdi mdi-account-plus"></i>เพิ่มผู้ดูแลระบบ</div>
+            <div class="menu-item" data-page="refunds"><i class="mdi mdi-cash-refund"></i>การคืนเงิน</div>
+
+            <button id="logoutBtn">ออกจากระบบ</button>
+        </nav>
+
+        <main class="content" id="content">กำลังโหลดเนื้อหา...</main>
+    </div>
+
+    <div id="paymentModal" class="payment-modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>ยืนยันการจ่ายเงิน</h2>
+            <div class="modal-body">
+                <p><strong>ชื่อฟรีแลนซ์:</strong> <span id="modalFreelancerName"></span></p>
+                <p><strong>OrderId:</strong> <span id="modalJobTitle"></span></p>
+                <p><strong>จำนวนเงิน:</strong> <span id="modalAmount"></span> บาท</p>
+
+                <div class="form-group" style="margin-top: 20px;">
+                    <label for="slipUpload">แนบสลิปการโอนเงิน:</label>
+                    <input type="file" id="slipUpload" accept="image/*" style="display: block; margin-top: 5px;">
+                    <img id="slipPreview" src="#" alt="Slip Preview" style="max-width: 100%; max-height: 200px; margin-top: 10px; display: none;">
+                </div>
+                <div id="modalAlertBox"></div>
+            </div>
+            <div style="text-align: right; margin-top: 20px;">
+                <button id="cancelPayBtn" class="button" style="background-color: #f44336; width: 120px; margin-right: 10px;">ยกเลิก</button>
+                <button id="confirmPayBtn" class="button" style="width: 150px;">ยืนยันการจ่ายเงิน</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="approveRefundModal" class="payment-modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeRefundModalBtn">&times;</span>
+            <h2>อนุมัติการคืนเงิน</h2>
+            <div class="modal-body">
+                <p><strong>Ref. ID:</strong> <span id="modalRefundId"></span></p>
+                <p><strong>Order ID:</strong> <span id="modalRefundOrderId"></span></p>
+                <p><strong>User ID:</strong> <span id="modalRefundUserId"></span></p>
+                <p><strong>ชื่อ:</strong> <span id="modalClientFirstName"></span></p>
+                <p><strong>นามสกุล:</strong> <span id="modalClientLastName"></span></p>
+                <p><strong>ชื่อธนาคาร:</strong> <span id="modalClientBankName"></span></p>
+                <p><strong>เลขบัญชี:</strong> <span id="modalClientAccountNumber"></span></p>
+                <p><strong>จำนวนเงิน:</strong> <span id="modalRefundAmount"></span> บาท</p>
+                <p><strong>วันที่ยกเลิก:</strong> <span id="modalRefundDate"></span></p>
+
+                <div class="form-group" style="margin-top: 20px;">
+                    <label for="refundSlipUpload">แนบสลิปการคืนเงิน:</label>
+                    <input type="file" id="refundSlipUpload" accept="image/*" style="display: block; margin-top: 5px;">
+                    <img id="refundSlipPreview" src="#" alt="Refund Slip Preview" style="max-width: 100%; max-height: 200px; margin-top: 10px; display: none;">
+                </div>
+                <div id="refundAlertBox" style="margin-top: 15px;"></div>
+            </div>
+            <div style="text-align: right; margin-top: 20px;">
+                <button id="cancelRefundBtn" class="button" style="background-color: #f44336; width: 120px; margin-right: 10px;">ยกเลิก</button>
+                <button id="confirmRefundBtn" class="button" style="width: 180px;">ยืนยันการอนุมัติ</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6oAJBTA4gROSlMspf08RXuIS2zlvKbOw",
+            authDomain: "access-able-demo.firebaseapp.com",
+            databaseURL: "https://access-able-demo-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "access-able-demo",
+            storageBucket: "access-able-demo.appspot.com",
+            messagingSenderId: "973291779516",
+            appId: "1:973291779516:web:4263a29f32ba7ab731e7b9",
+            measurementId: "G-8KLJC4L6C3"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+
+        const content = document.getElementById('content');
+        const menuItems = document.querySelectorAll('.menu-item');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        const paymentModal = document.getElementById('paymentModal');
+        const closeButton = paymentModal.querySelector('.close-button');
+        const cancelPayBtn = document.getElementById('cancelPayBtn');
+        const modalAlertBox = document.getElementById('modalAlertBox');
+        const confirmPayBtn = document.getElementById('confirmPayBtn');
+        const slipUploadInput = document.getElementById('slipUpload');
+        const slipPreviewImg = document.getElementById('slipPreview');
+
+        // NEW: Refund Approval Modal Elements
+        const approveRefundModal = document.getElementById('approveRefundModal');
+        const closeRefundModalBtn = document.getElementById('closeRefundModalBtn');
+        const cancelRefundBtn = document.getElementById('cancelRefundBtn');
+        const confirmRefundApprovalBtn = document.getElementById('confirmRefundBtn'); // Renamed to avoid conflict
+        const refundAlertBox = document.getElementById('refundAlertBox');
+
+        // Modal display elements for Refund Approval
+        const modalRefundId = document.getElementById('modalRefundId');
+        const modalRefundOrderId = document.getElementById('modalRefundOrderId');
+        const modalRefundUserId = document.getElementById('modalRefundUserId');
+        const modalClientFirstName = document.getElementById('modalClientFirstName');
+        const modalClientLastName = document.getElementById('modalClientLastName');
+        const modalClientBankName = document.getElementById('modalClientBankName');
+        const modalClientAccountNumber = document.getElementById('modalClientAccountNumber');
+        const modalRefundAmount = document.getElementById('modalRefundAmount');
+        const modalRefundDate = document.getElementById('modalRefundDate');
+
+        // NEW: Refund Slip Upload Elements
+        const refundSlipUploadInput = document.getElementById('refundSlipUpload');
+        const refundSlipPreviewImg = document.getElementById('refundSlipPreview');
+
+
+        logoutBtn.addEventListener('click', () => {
+            auth.signOut().then(() => {
+                window.location.href = 'login.html';
+            }).catch(error => {
+                alert('เกิดข้อผิดพลาดในการออกจากระบบ: ' + error.message);
+            });
+        });
+
+        function showAlert(message, isSuccess, targetAlertBox) {
+            if (targetAlertBox) {
+                targetAlertBox.innerHTML = `<div class="alert ${isSuccess ? 'alert-success' : 'alert-error'}">${message}</div>`;
+            } else {
+                const mainAlertBox = document.getElementById('alertBox');
+                if (mainAlertBox) {
+                    mainAlertBox.innerHTML = `<div class="alert ${isSuccess ? 'alert-success' : 'alert-error'}">${message}</div>`;
+                }
+            }
+        }
+
+        function closePaymentModal() {
+            paymentModal.classList.remove('open');
+            if (slipUploadInput) slipUploadInput.value = '';
+            if (slipPreviewImg) {
+                // ต้อง revoleObject for temporary URL to prevent memory leaks
+                if (slipPreviewImg.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(slipPreviewImg.src);
+                }
+                slipPreviewImg.src = '#';
+                slipPreviewImg.style.display = 'none';
+            }
+            if(modalAlertBox) modalAlertBox.innerHTML = '';
+        }
+
+        // NEW: Function to close Refund Approval Modal
+        function closeRefundModal() {
+            approveRefundModal.classList.remove('open');
+            if (refundAlertBox) refundAlertBox.innerHTML = '';
+            // NEW: Clear refund slip input and preview
+            if (refundSlipUploadInput) refundSlipUploadInput.value = '';
+            if (refundSlipPreviewImg) {
+                if (refundSlipPreviewImg.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(refundSlipPreviewImg.src);
+                }
+                refundSlipPreviewImg.src = '#';
+                refundSlipPreviewImg.style.display = 'none';
+            }
+        }
+
+
+        if (closeButton) {
+            closeButton.addEventListener('click', closePaymentModal);
+        }
+        if (cancelPayBtn) {
+            cancelPayBtn.addEventListener('click', closePaymentModal);
+        }
+
+        // NEW: Event Listeners for Refund Approval Modal
+        if (closeRefundModalBtn) {
+            closeRefundModalBtn.addEventListener('click', closeRefundModal);
+        }
+        if (cancelRefundBtn) {
+            cancelRefundBtn.addEventListener('click', closeRefundModal);
+        }
+
+        // NEW: Event Listener for refund slip preview
+        if (refundSlipUploadInput && refundSlipPreviewImg) {
+            refundSlipUploadInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const fileUrl = URL.createObjectURL(file);
+                    refundSlipPreviewImg.src = fileUrl;
+                    refundSlipPreviewImg.style.display = 'block';
+                } else {
+                    refundSlipPreviewImg.src = '#';
+                    refundSlipPreviewImg.style.display = 'none';
+                }
+            });
+        }
+
+
+        if (slipUploadInput && slipPreviewImg) {
+            slipUploadInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    // ใช้ URL.createObjectURL เพื่อสร้าง URL ชั่วคราวสำหรับแสดงพรีวิว
+                    const fileUrl = URL.createObjectURL(file);
+                    slipPreviewImg.src = fileUrl;
+                    slipPreviewImg.style.display = 'block';
+                } else {
+                    slipPreviewImg.src = '#';
+                    slipPreviewImg.style.display = 'none';
+                }
+            });
+        }
+
+        // Event Listener สำหรับปุ่มยืนยันการจ่ายเงิน (ใน modal) - แก้ไขเพื่อไม่ให้อัปโหลดสลิปจริง
+        if (confirmPayBtn) {
+            confirmPayBtn.addEventListener('click', async () => {
+                const jobId = confirmPayBtn.dataset.jobId;
+                const freelancerId = confirmPayBtn.dataset.freelancerId;
+                const amount = confirmPayBtn.dataset.amount;
+                const slipFile = slipUploadInput.files[0]; // ยังคงรับไฟล์เพื่อแสดงพรีวิว
+
+                modalAlertBox.innerHTML = '';
+
+                if (!freelancerId || !jobId) {
+                    showAlert('ข้อผิดพลาด: ไม่สามารถระบุข้อมูลผู้หางานหรืองานได้ กรุณาลองใหม่อีกครั้ง', false, modalAlertBox);
+                    console.error('Error: Missing freelancerId or jobId in confirmPayBtn.dataset', { freelancerId, jobId });
+                    return;
+                }
+
+                if (!slipFile) {
+                    showAlert('กรุณาแนบรูปสลิปการโอนเงิน', false, modalAlertBox);
+                    return;
+                }
+
+                confirmPayBtn.disabled = true;
+                confirmPayBtn.textContent = 'กำลังดำเนินการ...';
+
+                try {
+                    // *** ส่วนนี้คือการเปลี่ยนแปลงสำคัญ: ไม่มีการอัปโหลดไฟล์จริงไปที่ Firebase Storage ***
+                    // เราจะแค่ทำการอัปเดตสถานะใน Firestore เท่านั้น
+                    // และตั้งค่า paymentSlipUrl เป็น null หรือสตริงว่าง เพื่อระบุว่าไม่มีสลิปจริง
+                    const paymentSlipUrlToStore = ''; // หรือ null;
+
+                    const jobRef = db.collection('FreelanceProfile').doc(freelancerId)
+                                      .collection('Jobsuccessful').doc(jobId);
+                    await jobRef.update({
+                        status: 'จ่ายเงินสำเร็จแล้ว',
+                        paidAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        paymentSlipUrl: paymentSlipUrlToStore // อัปเดตด้วยค่าว่าง/null
+                    });
+
+                    showAlert('สถานะการจ่ายเงินอัปเดตสำเร็จแล้ว', true, modalAlertBox);
+                    alert('สถานะการจ่ายเงินอัปเดตสำเร็จแล้ว');
+                    closePaymentModal();
+                    loadPayFreelancerPage(); // โหลดข้อมูลใหม่เพื่ออัปเดตสถานะ
+
+                } catch (error) {
+                    console.error('เกิดข้อผิดพลาดในการอัปเดตสถานะการจ่ายเงิน:', error);
+                    showAlert('เกิดข้อผิดพลาดในการอัปเดตสถานะการจ่ายเงิน: ' + error.message, false, modalAlertBox);
+                } finally {
+                    confirmPayBtn.disabled = false;
+                    confirmPayBtn.textContent = 'ยืนยันการจ่ายเงิน';
+                }
+            });
+        }
+
+        // NEW: Event Listener for Confirm Refund Approval Button
+        if (confirmRefundApprovalBtn) { // Using confirmRefundApprovalBtn
+            confirmRefundApprovalBtn.addEventListener('click', async () => {
+                const refundId = confirmRefundApprovalBtn.dataset.refundId;
+                const refundSlipFile = refundSlipUploadInput.files[0]; // Get the uploaded file
+
+                if (!refundId) {
+                    showAlert('ข้อผิดพลาด: ไม่พบ ID การคืนเงิน', false, refundAlertBox);
+                    return;
+                }
+
+                // NEW: Check if a slip file is selected for refunds
+                if (!refundSlipFile) {
+                    showAlert('กรุณาแนบรูปสลิปการคืนเงิน', false, refundAlertBox);
+                    return;
+                }
+
+
+                confirmRefundApprovalBtn.disabled = true;
+                confirmRefundApprovalBtn.textContent = 'กำลังดำเนินการ...';
+
+                try {
+                    // Explicitly set refundSlipUrl to an empty string as per user request
+                    const refundSlipUrlToStore = '';
+                    // Update Firestore document
+                    await db.collection('Refunds').doc(refundId).update({
+                        refundStatus: 'คืนเงินสำเร็จแล้ว', // Update status to 'คืนเงินสำเร็จแล้ว'
+                        approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        refundSlipUrl: refundSlipUrlToStore // Save empty URL
+                    });
+
+                    showAlert('อนุมัติการคืนเงินสำเร็จแล้ว!', true, refundAlertBox);
+                    alert('อนุมัติการคืนเงินสำเร็จแล้ว!');
+                    closeRefundModal();
+                    loadRefundsData(); // Reload table data
+                } catch (error) {
+                    console.error('Error approving refund:', error);
+                    showAlert('เกิดข้อผิดพลาดในการอนุมัติ: ' + error.message, false, refundAlertBox);
+                } finally {
+                    confirmRefundApprovalBtn.disabled = false;
+                    confirmRefundApprovalBtn.textContent = 'ยืนยันการอนุมัติ';
+                }
+            });
+        }
+
+
+        async function loadJobseekerData() {
+            const tableBody = document.querySelector('#jobseekerTable tbody');
+            if (!tableBody) return;
+
+            tableBody.innerHTML = '<tr><td colspan="6">กำลังโหลดข้อมูล...</td></tr>';
+
+            try {
+                const snapshot = await db.collection('FreelanceProfile').get();
+                if (snapshot.empty) {
+                    tableBody.innerHTML = '<tr><td colspan="6">ไม่พบข้อมูลผู้หางาน</td></tr>';
+                } else {
+                    tableBody.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${data.firstName || ''}</td>
+                            <td>${data.lastName || ''}</td>
+                            <td>${data.phone || ''}</td>
+                            <td>${data.idCard || ''}</td>
+                            <td>${data.bankName || ''}</td>
+                            <td>${data.accountNumber || ''}</td>
+                        `;
+                        tableBody.appendChild(tr);
+                    });
+                }
+            } catch (err) {
+                console.error("Error loading jobseeker data:", err);
+                tableBody.innerHTML = '<tr><td colspan="6">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
+            }
+        }
+        
+        // NEW: Global variables for Omise page chart
+        let paymentChart = null;
+        let allOmisePayments = [];
+
+        // NEW: Function to render the payment chart
+        function renderPaymentChart(timescale = 'daily') {
+            const ctx = document.getElementById('paymentChartCanvas')?.getContext('2d');
+            if (!ctx) return;
+
+            const now = new Date();
+            let labels = [];
+            let data = [];
+            const dataMap = new Map();
+
+            // Thai month names for labels
+            const thMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+
+            switch (timescale) {
+                case 'daily': {
+                    const thirtyDaysAgo = new Date(now);
+                    thirtyDaysAgo.setDate(now.getDate() - 29);
+                    thirtyDaysAgo.setHours(0, 0, 0, 0);
+
+                    for (let i = 0; i < 30; i++) {
+                        const date = new Date(thirtyDaysAgo);
+                        date.setDate(thirtyDaysAgo.getDate() + i);
+                        const label = `${date.getDate()} ${thMonths[date.getMonth()]}`;
+                        labels.push(label);
+                        dataMap.set(label, 0);
+                    }
+
+                    allOmisePayments.forEach(p => {
+                        if (p.createdAt >= thirtyDaysAgo) {
+                            const date = new Date(p.createdAt);
+                            const label = `${date.getDate()} ${thMonths[date.getMonth()]}`;
+                            if (dataMap.has(label)) {
+                                dataMap.set(label, dataMap.get(label) + p.amount);
+                            }
+                        }
+                    });
+                    data = Array.from(dataMap.values());
+                    break;
+                }
+
+                case 'monthly': {
+                    const oneYearAgo = new Date(now);
+                    oneYearAgo.setMonth(now.getMonth() - 11);
+                    oneYearAgo.setDate(1);
+
+                    for (let i = 0; i < 12; i++) {
+                        const date = new Date(oneYearAgo);
+                        date.setMonth(oneYearAgo.getMonth() + i);
+                        const label = `${thMonths[date.getMonth()]} ${date.getFullYear()}`;
+                        labels.push(label);
+                        dataMap.set(label, 0);
+                    }
+
+                    allOmisePayments.forEach(p => {
+                        if (p.createdAt >= oneYearAgo) {
+                            const date = new Date(p.createdAt);
+                            const label = `${thMonths[date.getMonth()]} ${date.getFullYear()}`;
+                            if (dataMap.has(label)) {
+                                dataMap.set(label, dataMap.get(label) + p.amount);
+                            }
+                        }
+                    });
+                    data = Array.from(dataMap.values());
+                    break;
+                }
+
+                case '6months': {
+                    const sixMonthsAgo = new Date(now);
+                    sixMonthsAgo.setMonth(now.getMonth() - 5);
+                    sixMonthsAgo.setDate(1);
+
+                     for (let i = 0; i < 6; i++) {
+                        const date = new Date(sixMonthsAgo);
+                        date.setMonth(sixMonthsAgo.getMonth() + i);
+                        const label = `${thMonths[date.getMonth()]} ${date.getFullYear()}`;
+                        labels.push(label);
+                        dataMap.set(label, 0);
+                    }
+                    
+                    allOmisePayments.forEach(p => {
+                        if (p.createdAt >= sixMonthsAgo) {
+                            const date = new Date(p.createdAt);
+                            const label = `${thMonths[date.getMonth()]} ${date.getFullYear()}`;
+                             if (dataMap.has(label)) {
+                                dataMap.set(label, dataMap.get(label) + p.amount);
+                            }
+                        }
+                    });
+                    data = Array.from(dataMap.values());
+                    break;
+                }
+                
+                case 'yearly': {
+                    allOmisePayments.forEach(p => {
+                        const year = new Date(p.createdAt).getFullYear();
+                        dataMap.set(year, (dataMap.get(year) || 0) + p.amount);
+                    });
+                    const sortedYears = Array.from(dataMap.keys()).sort();
+                    labels = sortedYears;
+                    data = sortedYears.map(year => dataMap.get(year));
+                    break;
+                }
+            }
+
+            if (paymentChart) {
+                paymentChart.destroy();
+            }
+
+            paymentChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'ยอดรวมการชำระเงิน (บาท)',
+                        data: data,
+                        fill: false,
+                        borderColor: '#1e88e5',
+                        tension: 0.1,
+                        backgroundColor: 'rgba(30, 136, 229, 0.1)',
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    return '฿' + value.toLocaleString('th-TH');
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y.toLocaleString('th-TH', { style: 'currency', currency: 'THB' });
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Highlight the active button
+            document.querySelectorAll('.chart-controls button').forEach(b => b.classList.remove('active'));
+            document.querySelector(`.chart-controls button[data-timescale="${timescale}"]`).classList.add('active');
+        }
+
+
+        async function loadPaymentData(startDate = null, endDate = null) {
+    const tableBody = document.querySelector('#paymentTableBody');
+    const summaryContainer = document.getElementById('paymentSummary');
+
+    if (!tableBody) return;
+
+    tableBody.innerHTML = '<tr><td colspan="6">กำลังโหลดข้อมูล...</td></tr>';
+    if (summaryContainer) summaryContainer.innerHTML = '';
+
+    try {
+        let query = db.collection('Payments');
+
+        // ตรวจสอบและเพิ่มเงื่อนไขการกรองวันที่
+        if (startDate) {
+            query = query.where('createdAt', '>=', startDate);
+        }
+        if (endDate) {
+            query = query.where('createdAt', '<=', endDate);
+        }
+
+        // กำหนดการเรียงลำดับ (สำคัญ: ควรอยู่หลัง where)
+        query = query.orderBy('createdAt', 'desc');
+
+        const snapshot = await query.get();
+        allOmisePayments = []; // ล้างข้อมูลเก่าก่อนเพิ่มใหม่
+
+        if (snapshot.empty) {
+            tableBody.innerHTML = '<tr><td colspan="6">ไม่มีรายการในช่วงวันที่ที่เลือก</td></tr>';
+            // เคลียร์กราฟเมื่อไม่มีข้อมูล
+            if (window.paymentChart) { // ใช้ window.paymentChart เพื่อตรวจสอบว่ามีการกำหนด Chart ไว้แล้วหรือไม่
+                window.paymentChart.destroy();
+                window.paymentChart = null; // ตั้งค่าเป็น null เพื่อให้สร้างใหม่ได้
+            }
+        } else {
+            let totalAmount = 0;
+            let count = 0;
+            tableBody.innerHTML = '';
+
+            snapshot.forEach(doc => {
+                const d = doc.data();
+                const createdAtDate = d.createdAt?.toDate(); // แปลง Firestore Timestamp เป็น JavaScript Date
+                const createdAt = createdAtDate ? createdAtDate.toLocaleString('th-TH') : '-';
+                const amount = parseFloat(d.amount) || 0;
+
+                totalAmount += amount;
+                count++;
+
+                // เพิ่มข้อมูลเฉพาะรายการที่ 'paid' และมี createdAtDate ที่ถูกต้องสำหรับกราฟ
+                if (createdAtDate && d.status === 'paid') {
+                    allOmisePayments.push({ createdAt: createdAtDate, amount: amount });
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${d.chargeId || '-'}</td>
+                    <td>${d.email || '-'}</td>
+                    <td>${d.package || '-'}</td>
+                    <td>${amount.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</td>
+                    <td>${d.status || '-'}</td>
+                    <td>${createdAt}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+
+            if (summaryContainer) {
+                summaryContainer.innerHTML = `
+                    รวมทั้งหมด <strong>${count}</strong> รายการ |
+                    ยอดเงินรวม <strong>${totalAmount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}</strong>
+                `;
+            }
+            // อัปเดตกราฟด้วยข้อมูลที่กรองมาแล้ว
+            renderPaymentChart('daily');
+        }
+    } catch (err) {
+        console.error("Error loading payment data:", err);
+        tableBody.innerHTML = '<tr><td colspan="6">เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + err.message + '</td></tr>';
+        if (summaryContainer) summaryContainer.innerHTML = '';
+        // แจ้งเตือนผู้ใช้อาจจะต้องสร้าง Index ใน Firestore
+        if (err.code === 'failed-precondition') {
+            alert('การค้นหาล้มเหลว อาจจะต้องสร้าง Index ใน Firestore Console กรุณาตรวจสอบ Log สำหรับลิงก์');
+        }
+    }
+}
+
+// ฟังก์ชันสำหรับการกรองข้อมูลเมื่อผู้ใช้คลิกปุ่ม "ค้นหาข้อมูล"
+function applyOmiseFilter() {
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+
+    let startDate = null;
+    let endDate = null;
+
+    // แปลงสตริงวันที่จาก input field ให้เป็น JavaScript Date object
+    if (startDateInput.value) {
+        // ใช้ new Date() กับสตริง 'YYYY-MM-DD' จะสร้าง Date object ที่ 00:00:00 ของวันนั้น
+        // ในเขตเวลาท้องถิ่นของเบราว์เซอร์
+        startDate = new Date(startDateInput.value);
+    }
+    if (endDateInput.value) {
+        endDate = new Date(endDateInput.value);
+        // สำหรับวันที่สิ้นสุด ให้ตั้งเวลาเป็นสิ้นสุดวัน (23:59:59.999)
+        // เพื่อให้รวมรายการทั้งหมดในวันสุดท้ายด้วย
+        endDate.setHours(23, 59, 59, 999);
+    }
+
+    // เรียกโหลดข้อมูลด้วยวันที่ที่แปลงแล้ว
+    loadPaymentData(startDate, endDate);
+}
+
+// ฟังก์ชันสำหรับล้างค่าการค้นหา
+function clearOmiseFilter() {
+    document.getElementById('startDate').value = ''; // ล้างค่าใน input field
+    document.getElementById('endDate').value = '';   // ล้างค่าใน input field
+    loadPaymentData(); // โหลดข้อมูลทั้งหมดโดยไม่มีการกรองวันที่
+}
+
+// เพิ่ม Event Listeners เมื่อ DOM โหลดเสร็จสมบูรณ์
+document.addEventListener('DOMContentLoaded', () => {
+    // กำหนด Event Listener ให้กับปุ่ม "ค้นหาข้อมูล"
+    const filterBtn = document.getElementById('filterOmiseBtn');
+    if (filterBtn) {
+        filterBtn.addEventListener('click', applyOmiseFilter);
+    }
+
+    // กำหนด Event Listener ให้กับปุ่ม "ลบการค้นหา"
+    const clearFilterBtn = document.getElementById('clearFilterOmiseBtn');
+    if (clearFilterBtn) {
+        clearFilterBtn.addEventListener('click', clearOmiseFilter);
+    }
+
+    // โหลดข้อมูลเริ่มต้นเมื่อหน้าเว็บโหลดเสร็จ
+    loadPaymentData();
+
+    // กำหนดค่าเริ่มต้นให้กับ input date เป็นวันนี้สำหรับ endDate (ทางเลือก)
+    // หรืออาจจะเว้นว่างไว้ก็ได้ขึ้นอยู่กับการใช้งาน
+    const today = new Date();
+    const formattedToday = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    // document.getElementById('endDate').value = formattedToday;
+});
+
+// ฟังก์ชันสำหรับการกรองข้อมูลเมื่อผู้ใช้คลิกปุ่ม "ค้นหาข้อมูล"
+function applyOmiseFilter() {
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+
+    let startDate = null;
+    let endDate = null;
+
+    // แปลงสตริงวันที่จาก input field ให้เป็น JavaScript Date object
+    if (startDateInput.value) {
+        // ใช้ new Date() กับสตริง 'YYYY-MM-DD' จะสร้าง Date object ที่ 00:00:00 ของวันนั้น
+        // ในเขตเวลาท้องถิ่นของเบราว์เซอร์
+        startDate = new Date(startDateInput.value);
+    }
+    if (endDateInput.value) {
+        endDate = new Date(endDateInput.value);
+        // สำหรับวันที่สิ้นสุด ให้ตั้งเวลาเป็นสิ้นสุดวัน (23:59:59.999)
+        // เพื่อให้รวมรายการทั้งหมดในวันสุดท้ายด้วย
+        endDate.setHours(23, 59, 59, 999);
+    }
+
+    // เรียกโหลดข้อมูลด้วยวันที่ที่แปลงแล้ว
+    loadPaymentData(startDate, endDate);
+}
+
+// ฟังก์ชันสำหรับล้างค่าการค้นหา
+function clearOmiseFilter() {
+    document.getElementById('startDate').value = ''; // ล้างค่าใน input field
+    document.getElementById('endDate').value = '';   // ล้างค่าใน input field
+    loadPaymentData(); // โหลดข้อมูลทั้งหมดโดยไม่มีการกรองวันที่
+}
+
+// เพิ่ม Event Listeners เมื่อ DOM โหลดเสร็จสมบูรณ์
+document.addEventListener('DOMContentLoaded', () => {
+    // กำหนด Event Listener ให้กับปุ่ม "ค้นหาข้อมูล"
+    const filterBtn = document.getElementById('filterOmiseBtn');
+    if (filterBtn) {
+        filterBtn.addEventListener('click', applyOmiseFilter);
+    }
+
+    // กำหนด Event Listener ให้กับปุ่ม "ลบการค้นหา"
+    const clearFilterBtn = document.getElementById('clearFilterOmiseBtn');
+    if (clearFilterBtn) {
+        clearFilterBtn.addEventListener('click', clearOmiseFilter);
+    }
+
+    // โหลดข้อมูลเริ่มต้นเมื่อหน้าเว็บโหลดเสร็จ
+    loadPaymentData();
+
+    // กำหนดค่าเริ่มต้นให้กับ input date เป็นวันนี้สำหรับ endDate (ทางเลือก)
+    // หรืออาจจะเว้นว่างไว้ก็ได้ขึ้นอยู่กับการใช้งาน
+    const today = new Date();
+    const formattedToday = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    // document.getElementById('endDate').value = formattedToday;
+});
+
+        function loadMainPage() {
+            function updateDateTime() {
+                const now = new Date();
+                const options = {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false,
+                    timeZone: 'Asia/Bangkok'
+                };
+                const formattedDateTime = now.toLocaleString('th-TH', options);
+                const datetimeElement = document.getElementById('datetime');
+                if (datetimeElement) {
+                    datetimeElement.textContent = formattedDateTime;
+                } else {
+                    console.warn("datetime element not found. Date/Time update skipped.");
+                }
+            }
+
+            async function loadUserCounts() {
+                const freelancerCountElement = document.getElementById('freelancerCount');
+                const clientCountElement = document.getElementById('clientCount');
+                const trainerCountElement = document.getElementById('trainerCount');
+
+                if (!freelancerCountElement || !clientCountElement || !trainerCountElement) {
+                    console.warn("User count display elements not found in the loaded content. Skipping user count load.");
+                    return;
+                }
+
+                freelancerCountElement.textContent = 'กำลังโหลด...';
+                clientCountElement.textContent = 'กำลังโหลด...';
+                trainerCountElement.textContent = 'กำลังโหลด...';
+                freelancerCountElement.classList.add('loading-text');
+                clientCountElement.classList.add('loading-text');
+                trainerCountElement.classList.add('loading-text');
+                freelancerCountElement.classList.remove('error-text');
+                clientCountElement.classList.remove('error-text');
+                trainerCountElement.classList.remove('error-text');
+
+                try {
+                    const [freelancersSnapshot, clientsSnapshot, trainersSnapshot] = await Promise.all([
+                        db.collection('FreelanceProfile').get(),
+                        db.collection('ClientProfile').get(),
+                        db.collection('TrainingProvider').get()
+                    ]);
+
+                    freelancerCountElement.textContent = freelancersSnapshot.size;
+                    clientCountElement.textContent = clientsSnapshot.size;
+                    trainerCountElement.textContent = trainersSnapshot.size;
+
+                    freelancerCountElement.classList.remove('loading-text');
+                    clientCountElement.classList.remove('loading-text');
+                    trainerCountElement.classList.remove('loading-text');
+
+                } catch (error) {
+                    console.error("Error fetching user counts:", error);
+                    freelancerCountElement.textContent = 'ข้อผิดพลาด';
+                    clientCountElement.textContent = 'ข้อผิดพลาด';
+                    trainerCountElement.textContent = 'ข้อผิดพลาด';
+                    freelancerCountElement.classList.add('error-text');
+                    clientCountElement.classList.add('error-text');
+                    trainerCountElement.classList.add('error-text');
+                    freelancerCountElement.classList.remove('loading-text');
+                    clientCountElement.classList.remove('loading-text');
+                    trainerCountElement.classList.remove('loading-text');
+                }
+            }
+
+            async function loadDashboardHtmlContent() {
+                try {
+                    const response = await fetch('main.html');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const htmlContent = await response.text();
+                    const container = document.getElementById('content');
+                    if (container) {
+                        container.innerHTML = htmlContent;
+                        initializeDashboardFeatures();
+                    } else {
+                        console.error("The div with ID 'content' was not found in index.html.");
+                    }
+                } catch (error) {
+                    console.error("Failed to load dashboard content:", error);
+                    const container = document.getElementById('content');
+                    if (container) {
+                        container.innerHTML = '<p style="color: red; font-size: 1.2em;">ไม่สามารถโหลดหน้า Dashboard ได้: ' + error.message + '</p>';
+                    }
+                }
+            }
+
+            function initializeDashboardFeatures() {
+                updateDateTime();
+                setInterval(updateDateTime, 1000);
+                loadNetIncome();
+                loadUserCounts();
+            }
+
+            loadDashboardHtmlContent();
+        }
+
+        async function loadEmployerData() {
+            const tableBody = document.getElementById('clientBody');
+            const loading = document.getElementById('loading');
+            const table = document.getElementById('clientTable');
+
+            if (!tableBody || !loading || !table) return;
+
+            tableBody.innerHTML = '<tr><td colspan="5">กำลังโหลดข้อมูล...</td></tr>';
+            if (loading) loading.style.display = 'block';
+            if (table) table.style.display = 'none';
+
+            try {
+                const snapshot = await db.collection('ClientProfile').get();
+
+                if (snapshot.empty) {
+                    tableBody.innerHTML = '<tr><td colspan="5">ไม่พบข้อมูลผู้จ้างงาน</td></tr>';
+                } else {
+                    tableBody.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${data.firstName || '-'}</td>
+                            <td>${data.lastName || '-'}</td>
+                            <td>${data.phone || '-'}</td>
+                            <td>${data.bankName || '-'}</td>
+                            <td>${data.accountNumber || '-'}</td>
+                        `;
+                        tableBody.appendChild(tr);
+                    });
+                }
+            } catch (err) {
+                console.error('Error loading employer data:', err);
+                tableBody.innerHTML = `<tr><td colspan="5">เกิดข้อผิดพลาด: ${err.message}</td></tr>`;
+            } finally {
+                if (loading) loading.style.display = 'none';
+                if (table) table.style.display = 'table';
+            }
+        }
+
+        function exportTableToExcel(tableId, filename = '') {
+            const table = document.getElementById(tableId);
+            if (!table) {
+                alert('ไม่พบตารางสำหรับ Export');
+                return;
+            }
+            const wb = XLSX.utils.table_to_book(table, { sheet: "Sheet1" });
+            XLSX.writeFile(wb, filename ? `${filename}.xlsx` : 'export.xlsx');
+        }
+
+
+        function loadPage(page) {
+            content.textContent = 'กำลังโหลดเนื้อหา...';
+
+            fetch(`${page}.html`)
+                .then(res => {
+                    if (!res.ok) throw new Error('ไม่พบไฟล์');
+                    return res.text();
+                })
+                .then(html => {
+                    const parser = new DOMParser();
+                    // Try to find a specific page content div first, then fallback to body
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const mainContentElements = doc.querySelector('#refunds-page-content') || doc.querySelector('#main-content') || doc.body;
+
+                    // Clear existing content and scripts in the main content area
+                    content.innerHTML = '';
+
+                    // Append elements from the fetched HTML, excluding scripts initially
+                    Array.from(mainContentElements.children).forEach(child => {
+                        if (child.tagName.toLowerCase() !== 'script') {
+                            content.appendChild(child.cloneNode(true)); // Deep clone to append
+                        }
+                    });
+
+                    // Now, find and execute scripts from the fetched HTML
+                    Array.from(mainContentElements.querySelectorAll('script')).forEach(oldScript => {
+                        const newScript = document.createElement('script');
+                        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                        newScript.textContent = oldScript.textContent; // Copy script content
+                        content.appendChild(newScript); // Append to the current content div to execute
+                    });
+
+
+                    // Clean up existing export buttons before re-adding as needed
+                    const existingBtns = content.querySelectorAll('.export-btn');
+                    existingBtns.forEach(btn => btn.remove());
+                    const h2 = content.querySelector('h2');
+
+
+                    // Handle page-specific functions and export buttons
+                    if (page === 'jobseeker' || page === 'Client' || page === 'omise' || page === 'training') {
+                        const btn = document.createElement('button');
+                        btn.classList.add('export-btn');
+                        btn.textContent = 'Export Excel';
+                        let tableIdToExport = '';
+                        let filenamePrefix = '';
+
+                        if (page === 'jobseeker') {
+                            tableIdToExport = 'jobseekerTable';
+                            filenamePrefix = 'Jobseeker_Data';
+                            loadJobseekerData();
+                        } else if (page === 'Client') {
+                            tableIdToExport = 'clientTable';
+                            filenamePrefix = 'Client_Data';
+                            loadEmployerData();
+                        } else if (page === 'omise') {
+                            // NEW: Add chart container and controls for Omise page
+                            const chartContainer = document.createElement('div');
+                            chartContainer.id = 'paymentChartContainer';
+                            chartContainer.innerHTML = `
+                                <div class="chart-controls">
+                                    <button data-timescale="daily" class="active">1 เดือน</button>
+                                    <button data-timescale="6months">6 เดือน</button>
+                                    <button data-timescale="monthly">12 เดือน</button>
+                                    <button data-timescale="yearly">รายปี</button>
+                                </div>
+                                <canvas id="paymentChartCanvas" height="350"></canvas>
+                            `;
+                             if (h2) {
+                                h2.insertAdjacentElement('afterend', chartContainer);
+                            } else {
+                                content.prepend(chartContainer);
+                            }
+                            // Attach event listeners to new chart controls
+                            document.querySelectorAll('.chart-controls button').forEach(button => {
+                                button.addEventListener('click', () => {
+                                    renderPaymentChart(button.dataset.timescale);
+                                });
+                            });
+
+
+                            tableIdToExport = 'paymentTable';
+                            filenamePrefix = 'Payment_Status';
+                            loadPaymentData(); // Initial load for Omise
+                            
+                            const startDateInput = document.getElementById('startDate');
+                            const endDateInput = document.getElementById('endDate');
+                            const filterOmiseBtn = document.getElementById('filterOmiseBtn');
+                            const clearFilterOmiseBtn = document.getElementById('clearFilterOmiseBtn');
+
+                            if (filterOmiseBtn) {
+                                filterOmiseBtn.addEventListener('click', () => {
+                                    let startDate = null;
+                                    let endDate = null;
+
+                                    if (startDateInput.value) {
+                                        startDate = firebase.firestore.Timestamp.fromDate(new Date(startDateInput.value));
+                                    }
+                                    if (endDateInput.value) {
+                                        let endOfDay = new Date(endDateInput.value);
+                                        endOfDay.setHours(23, 59, 59, 999); // Set to end of day
+                                        endDate = firebase.firestore.Timestamp.fromDate(endOfDay);
+                                    }
+                                    loadPaymentData(startDate, endDate);
+                                });
+                            }
+
+                            if (clearFilterOmiseBtn) {
+                                clearFilterOmiseBtn.addEventListener('click', () => {
+                                    startDateInput.value = '';
+                                    endDateInput.value = '';
+                                    loadPaymentData(); // Load all data
+                                });
+                            }
+                        } else if (page === 'training') {
+                            tableIdToExport = 'trainingProviderTable';
+                            filenamePrefix = 'Training_Provider_Data';
+                            loadTrainingProviderData();
+                        }
+
+                        btn.addEventListener('click', () => {
+                            exportTableToExcel(tableIdToExport, filenamePrefix);
+                        });
+                        
+                        // Insert export button after the filters on Omise page, or after H2 on others
+                        const omiseFilterContainer = content.querySelector('.filter-container');
+                        if (page === 'omise' && omiseFilterContainer) {
+                             omiseFilterContainer.appendChild(btn);
+                             btn.style.float = 'none';
+                             btn.style.marginLeft = '10px';
+                        } else if (h2) {
+                            h2.insertAdjacentElement('afterend', btn);
+                        } else {
+                            content.prepend(btn);
+                        }
+                    }
+
+                    // Page-specific function calls (after all HTML and scripts are loaded/executed)
+                    if (page === 'pay-freelancer') {
+                        loadPayFreelancerPage();
+                    } else if (page === 'main') {
+                        loadMainPage();
+                    } else if (page === 'AddAdmin') {
+                        const emailInput = document.getElementById('email');
+                        const passwordInput = document.getElementById('password');
+                        const rePasswordInput = document.getElementById('rePassword');
+                        const firstNameInput = document.getElementById('firstName');
+                        const lastNameInput = document.getElementById('lastName');
+                        const createAdminBtn = document.getElementById('createBtn');
+                        const adminAlertBox = document.getElementById('alertBox');
+
+                        if (!emailInput || !passwordInput || !rePasswordInput || !firstNameInput || !lastNameInput || !createAdminBtn || !adminAlertBox) {
+                            console.warn("Missing one or more elements for 'AddAdmin' page. Skipping event listener setup.");
+                            return;
+                        }
+
+                        if (createAdminBtn) {
+                            createAdminBtn.addEventListener('click', async () => {
+                                const email = emailInput.value.trim();
+                                const password = passwordInput.value;
+                                const rePassword = rePasswordInput.value;
+                                const firstName = firstNameInput.value.trim();
+                                const lastName = lastNameInput.value.trim();
+
+                                adminAlertBox.innerHTML = '';
+
+                                if (!email || !password || !rePassword || !firstName || !lastName) {
+                                    showAlert('กรุณากรอกข้อมูลให้ครบทุกช่อง', false, adminAlertBox);
+                                    return;
+                                }
+
+                                if (password.length < 6) {
+                                    showAlert('รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร', false, adminAlertBox);
+                                    return;
+                                }
+
+                                if (password !== rePassword) {
+                                    showAlert('รหัสผ่านไม่ตรงกัน', false, adminAlertBox);
+                                    return;
+                                }
+
+                                createAdminBtn.disabled = true;
+                                createAdminBtn.textContent = 'กำลังดำเนินการ...';
+
+                                try {
+                                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                                    const user = userCredential.user;
+
+                                    await db.collection('AdminProfile').doc(user.uid).set({
+                                        firstName,
+                                        lastName,
+                                        email,
+                                        role: 'admin',
+                                    });
+
+                                    await db.collection('User').doc(user.uid).set({
+                                        email,
+                                        uid: user.uid,
+                                        role: 'admin'
+                                    });
+
+                                    showAlert('สร้างผู้ดูแลระบบเรียบร้อยแล้ว', true, adminAlertBox);
+                                    alert('สร้างผู้ดูแลระบบเรียบร้อยแล้ว');
+                                    emailInput.value = '';
+                                    passwordInput.value = '';
+                                    rePasswordInput.value = '';
+                                    firstNameInput.value = '';
+                                    lastNameInput.value = '';
+
+                                } catch (err) {
+                                    console.error('Error creating admin:', err);
+                                    let errorMessage = 'เกิดข้อผิดพลาดในการสร้างบัญชี';
+                                    if (err.code === 'auth/email-already-in-use') {
+                                        errorMessage = 'อีเมลนี้ถูกใช้แล้ว โปรดใช้อีเมลอื่น';
+                                    } else if (err.code === 'auth/weak-password') {
+                                        errorMessage = 'รหัสผ่านควรมีความยาวอย่างน้อย 6 ตัวอักษร';
+                                    }
+                                    showAlert(errorMessage, false, adminAlertBox);
+                                } finally {
+                                    createAdminBtn.disabled = false;
+                                    createAdminBtn.textContent = 'สร้างผู้ดูแลระบบ';
+                                }
+                            });
+                        }
+                    } else if (page === 'refunds') { // CORRECT LOCATION for refunds page logic
+                        if (typeof loadRefundsData === 'function') {
+                            loadRefundsData(); // Call the function defined in refunds.html
+                        } else {
+                            // This warning means the script inside refunds.html might not have executed
+                            console.warn("loadRefundsData function not found after loading refunds.html. Ensure the script in refunds.html runs.");
+                        }
+                    }
+                })
+                .catch(err => {
+                    content.textContent = 'ไม่สามารถโหลดข้อมูล: ' + err.message;
+                    console.error('Fetch error:', err);
+                });
+        }
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                db.collection('AdminProfile').doc(user.uid).get().then(adminDoc => {
+                    if (adminDoc.exists && adminDoc.data().role === 'admin') {
+                        loadPage('main');
+                    } else {
+                        alert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
+                        auth.signOut();
+                        window.location.href = 'login.html';
+                    }
+                }).catch(error => {
+                    console.error("Error checking admin profile on auth state change:", error);
+                    alert('เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์ โปรดลองเข้าสู่ระบบใหม่');
+                    auth.signOut();
+                    window.location.href = 'login.html';
+                });
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        menuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                menuItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                loadPage(item.dataset.page);
+            });
+        });
+
+        async function loadTrainingProviderData() {
+            const tableBody = document.querySelector('#trainingProviderTable tbody');
+            const loading = document.getElementById('loading');
+            const table = document.getElementById('trainingProviderTable');
+
+            if (!tableBody || !loading || !table) return;
+
+            tableBody.innerHTML = '<tr><td colspan="6">กำลังโหลดข้อมูล...</td></tr>';
+            loading.style.display = 'block';
+            table.style.display = 'none';
+
+            try {
+                const snapshot = await db.collection('TrainingProvider').get();
+
+                if (snapshot.empty) {
+                    tableBody.innerHTML = '<tr><td colspan="6">ไม่พบข้อมูลหน่วยงานฝึกอบรม</td></tr>';
+                } else {
+                    tableBody.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${data.organizationName || '-'}</td>
+                            <td>${data.responsiblePersonFirstName || '-'}</td>
+                            <td>${data.responsiblePersonLastName || '-'}</td>
+                            <td>${data.phone || '-'}</td>
+                            <td>${data.bankName || '-'}</td>
+                            <td>${data.accountNumber || '-'}</td>
+                        `;
+                        tableBody.appendChild(tr);
+                    });
+                }
+            } catch (err) {
+                console.error('Error loading training provider data:', err);
+                tableBody.innerHTML = `<tr><td colspan="6">เกิดข้อผิดพลาด: ${err.message}</td></tr>`;
+            } finally {
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            }
+        }
+
+        const fetchFreelancerName = async (freelancerId) => {
+            if (!freelancerId) {
+                return 'ไม่พบชื่อฟรีแลนซ์';
+            }
+            try {
+                const freelancerRef = db.collection('FreelanceProfile').doc(freelancerId);
+                const freelancerDoc = await freelancerRef.get();
+                if (freelancerDoc.exists) {
+                    const freelancerData = freelancerDoc.data();
+                    const firstName = freelancerData.firstName || 'ไม่พบชื่อ';
+                    return firstName;
+                } else {
+                    return 'ไม่พบชื่อฟรีแลนซ์';
+                }
+            } catch (error) {
+                console.error('เกิดข้อผิดพลาดในการดึงข้อมูลชื่อฟรีแลนซ์:', error);
+                return 'ไม่สามารถดึงชื่อได้';
+            }
+        };
+
+        async function loadPayFreelancerPage() {
+            const tableBody = document.querySelector('#payFreelancerTable tbody');
+            const loadingDiv = document.getElementById('loading');
+            const jobListContainer = document.getElementById('jobListContainer');
+
+            if (!tableBody || !loadingDiv || !jobListContainer) return;
+
+            tableBody.innerHTML = '<tr><td colspan="11">กำลังโหลดข้อมูลงานที่สำเร็จ...</td></tr>';
+            loadingDiv.style.display = 'block';
+            jobListContainer.style.display = 'none';
+
+            try {
+                const allFreelancerProfiles = await db.collection('FreelanceProfile').get();
+                const jobs = [];
+
+                const freelancerDetailsMap = new Map();
+                for (const doc of allFreelancerProfiles.docs) {
+                    freelancerDetailsMap.set(doc.id, doc.data());
+                }
+
+                for (const freelancerDoc of allFreelancerProfiles.docs) {
+                    const freelancerId = freelancerDoc.id;
+                    const jobSuccessfulSnapshot = await freelancerDoc.ref.collection('Jobsuccessful').get();
+
+                    for (const jobDoc of jobSuccessfulSnapshot.docs) {
+                        const jobData = { id: jobDoc.id, ...jobDoc.data() };
+                        const timestamp = jobData.timestamp?.toDate ? jobData.timestamp.toDate() : null;
+                        const paidAt = jobData.paidAt?.toDate ? jobData.paidAt.toDate() : null;
+                        const finalPrice = jobData.finalPrice || 0;
+                        const originalPrice = jobData.originalPrice || 0;
+                        const feePercentage = jobData.feePercentage || 0;
+                        const status = jobData.status || 'รอดำเนินการ';
+                        // ไม่ต้องใช้ paymentSlipUrl ในการแสดงผลอีกต่อไป
+                        // const paymentSlipUrl = jobData.paymentSlipUrl || null;
+
+                        const rawOrderId = jobData.orderId || 'ไม่ระบุ';
+                        const maxLength = 25;
+                        const displayOrderId = rawOrderId.length > maxLength
+                            ? rawOrderId.substring(0, maxLength) + '...'
+                            : rawOrderId;
+
+                        const currentFreelancerDetails = freelancerDetailsMap.get(freelancerId);
+                        const freelancerFullName = currentFreelancerDetails
+                            ? `${currentFreelancerDetails.firstName || ''} ${currentFreelancerDetails.lastName || ''}`.trim()
+                            : 'ไม่พบฟรีแลนซ์';
+                        const freelancerBankName = currentFreelancerDetails?.bankName || 'ไม่พบข้อมูล';
+                        const freelancerAccountNumber = currentFreelancerDetails?.accountNumber || 'ไม่พบข้อมูล';
+
+                        jobs.push({
+                            id: jobDoc.id,
+                            freelancerId: freelancerId,
+                            freelancerName: freelancerFullName,
+                            bankName: freelancerBankName,
+                            accountNumber: freelancerAccountNumber,
+                            jobTitle: displayOrderId,
+                            finalPrice: finalPrice,
+                            originalPrice: originalPrice,
+                            feePercentage: feePercentage,
+                            status: status,
+                            timestamp: timestamp,
+                            paidAt: paidAt,
+                            // ไม่ต้องส่ง paymentSlipUrl เข้ามาใน job object อีกต่อไป
+                            // paymentSlipUrl: paymentSlipUrl
+                        });
+                    }
+                }
+
+                tableBody.innerHTML = '';
+                if (jobs.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="11">ไม่พบข้อมูลงานที่สำเร็จ</td></tr>';
+                } else {
+                    jobs.forEach(job => {
+                        const isPaid = job.status === 'จ่ายเงินสำเร็จแล้ว' || job.status === 'Paid';
+                        const displayStatus = isPaid ? 'จ่ายเงินสำเร็จแล้ว' : 'รอการชำระ';
+                        const statusColor = isPaid ? 'green' : 'orange';
+
+                        let actionButtonHtml = '';
+                        if (isPaid) {
+                            actionButtonHtml = 'จ่ายแล้ว'; // แสดงแค่ "จ่ายแล้ว"
+                        } else {
+                            actionButtonHtml = `<button class="pay-button pay-now-btn"
+                                data-job-id="${job.id}"
+                                data-freelancer-id="${job.freelancerId}"
+                                data-freelancer-name="${job.freelancerName}"
+                                data-job-title="${job.jobTitle}"
+                                data-amount="${job.finalPrice || 0}">จ่ายเงิน</button>`;
+                        }
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td style="font-size:12px;">${job.freelancerName || '-'}</td>
+                            <td style="font-size:10px;">${job.jobTitle || '-'}</td>
+                            <td style="color: ${statusColor}; font-weight: bold;">${displayStatus}</td>
+                            <td>${(job.originalPrice || 0).toLocaleString('th-TH', { minimumFractionDigits: 2 })}</td>
+                            <td>${(job.feePercentage || 0).toLocaleString('th-TH', { minimumFractionDigits: 0 })}%</td>
+                            <td>${(job.finalPrice || 0).toLocaleString('th-TH', { minimumFractionDigits: 2 })}</td>
+                            <td>${formatDate(job.timestamp)}</td>
+                            <td>${formatDate(job.paidAt)}</td>
+                            <td>${job.bankName || '-'}</td>
+                            <td>${job.accountNumber || '-'}</td>
+                            <td>${actionButtonHtml}</td>
+                        `;
+                        tableBody.appendChild(tr);
+                    });
+
+                    document.querySelectorAll('.pay-now-btn').forEach(button => {
+                        button.addEventListener('click', (event) => {
+                            const btn = event.target;
+                            const jobId = btn.dataset.jobId;
+                            const freelancerId = btn.dataset.freelancerId;
+                            const freelancerName = btn.dataset.freelancerName;
+                            const jobTitle = btn.dataset.jobTitle;
+                            const amount = btn.dataset.amount;
+
+                            document.getElementById('modalJobTitle').textContent = jobTitle;
+                            document.getElementById('modalFreelancerName').textContent = freelancerName;
+                            document.getElementById('modalAmount').textContent = parseFloat(amount).toLocaleString('th-TH', { minimumFractionDigits: 2 });
+                            
+                            paymentModal.classList.add('open'); 
+
+                            if (slipUploadInput) slipUploadInput.value = '';
+                            if (slipPreviewImg) {
+                                if (slipPreviewImg.src.startsWith('blob:')) {
+                                    URL.revokeObjectURL(slipPreviewImg.src);
+                                }
+                                slipPreviewImg.src = '#';
+                                slipPreviewImg.style.display = 'none';
+                            }
+                            if (modalAlertBox) modalAlertBox.innerHTML = '';
+
+                            confirmPayBtn.dataset.jobId = jobId;
+                            confirmPayBtn.dataset.freelancerId = freelancerId;
+                            confirmPayBtn.dataset.amount = amount;
+                        });
+                    });
+
+
+                }
+            } catch (error) {
+                console.error('เกิดข้อผิดพลาดในการโหลดข้อมูล Jobsuccessful:', error);
+                tableBody.innerHTML = '<tr><td colspan="11">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
+            } finally {
+                loadingDiv.style.display = 'none';
+                jobListContainer.style.display = 'block';
+            }
+        }
+
+        const formatDate = (date) => {
+            if (!date) return '-';
+            const d = (date instanceof Date) ? date : new Date(date);
+            if (isNaN(d.getTime())) return '-';
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return d.toLocaleDateString('th-TH', options);
+        };
+
+        async function loadNetIncome() {
+            const netIncomeElement = document.getElementById('netIncome');
+            const totalOmiseIncomeElement = document.getElementById('totalOmiseIncome');
+            const totalFreelancerPaidElement = document.getElementById('totalFreelancerPaid');
+            const totalRefundedAmountElement = document.getElementById('totalRefundedAmount');
+
+            if (!netIncomeElement || !totalOmiseIncomeElement || !totalFreelancerPaidElement || !totalRefundedAmountElement) {
+                console.warn("One or more income/expense/refund elements not found. Skipping calculation.");
+                return;
+            }
+
+            netIncomeElement.textContent = 'กำลังคำนวณ...';
+            totalOmiseIncomeElement.textContent = 'กำลังคำนวณ...';
+            totalFreelancerPaidElement.textContent = 'กำลังคำนวณ...';
+            totalRefundedAmountElement.textContent = 'กำลังคำนวณ...';
+
+            netIncomeElement.classList.add('loading-text');
+            totalOmiseIncomeElement.classList.add('loading-text');
+            totalFreelancerPaidElement.classList.add('loading-text');
+            totalRefundedAmountElement.classList.add('loading-text');
+
+            netIncomeElement.classList.remove('error-text');
+            totalOmiseIncomeElement.classList.remove('error-text');
+            totalFreelancerPaidElement.classList.remove('error-text');
+            totalRefundedAmountElement.classList.remove('error-text');
+
+            try {
+                let totalOmiseAmount = 0;
+                let totalFreelancerAmountPaid = 0;
+                let totalRefundedAmount = 0;
+
+                const paymentsSnapshot = await db.collection('Payments').where('status', '==', 'paid').get();
+                paymentsSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    totalOmiseAmount += parseFloat(data.amount || 0);
+                });
+
+                const freelancerProfilesSnapshot = await db.collection('FreelanceProfile').get();
+                for (const freelancerDoc of freelancerProfilesSnapshot.docs) {
+                    const jobSuccessfulSnapshot = await freelancerDoc.ref.collection('Jobsuccessful')
+                                                                 .where('status', 'in', ['จ่ายเงินสำเร็จแล้ว', 'Paid'])
+                                                                 .get();
+                    jobSuccessfulSnapshot.forEach(jobDoc => {
+                        const jobData = jobDoc.data();
+                        totalFreelancerAmountPaid += parseFloat(jobData.finalPrice || 0);
+                    });
+                }
+
+                const refundsSnapshot = await db.collection('Refunds').where('refundStatus', '==', 'คืนเงินสำเร็จแล้ว').get();
+                refundsSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    totalRefundedAmount += parseFloat(data.amount || 0);
+                });
+
+                const netIncome = totalOmiseAmount - totalFreelancerAmountPaid - totalRefundedAmount;
+
+                netIncomeElement.textContent = `${netIncome.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}`;
+                totalOmiseIncomeElement.textContent = `${totalOmiseAmount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}`;
+                totalFreelancerPaidElement.textContent = `${totalFreelancerAmountPaid.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}`;
+                totalRefundedAmountElement.textContent = `${totalRefundedAmount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}`;
+
+                netIncomeElement.classList.remove('loading-text');
+                totalOmiseIncomeElement.classList.remove('loading-text');
+                totalFreelancerPaidElement.classList.remove('loading-text');
+                totalRefundedAmountElement.classList.remove('loading-text');
+
+                if (netIncome < 0) {
+                    netIncomeElement.style.color = '#e53935';
+                } else {
+                    netIncomeElement.style.color = '#4CAF50';
+                }
+
+                totalOmiseIncomeElement.style.color = '#4CAF50';
+                totalFreelancerPaidElement.style.color = '#f44336';
+                totalRefundedAmountElement.style.color = '#ff9800';
+
+            } catch (error) {
+                console.error("Error calculating income/expense details:", error);
+                netIncomeElement.textContent = 'ข้อผิดพลาด';
+                totalOmiseIncomeElement.textContent = 'ข้อผิดพลาด';
+                totalFreelancerPaidElement.textContent = 'ข้อผิดพลาด';
+                totalRefundedAmountElement.textContent = 'ข้อผิดพลาด';
+
+                netIncomeElement.classList.add('error-text');
+                totalOmiseIncomeElement.classList.add('error-text');
+                totalFreelancerPaidElement.classList.add('error-text');
+                totalRefundedAmountElement.classList.add('error-text');
+
+                netIncomeElement.classList.remove('loading-text');
+                totalOmiseIncomeElement.classList.remove('loading-text');
+                totalFreelancerPaidElement.classList.remove('loading-text');
+                totalRefundedAmountElement.classList.remove('loading-text');
+
+                totalOmiseIncomeElement.style.color = '#d32f2f';
+                totalFreelancerPaidElement.style.color = '#d32f2f';
+                totalRefundedAmountElement.style.color = '#d32f2f';
+            }
+        }
+
+
+        async function loadRefundsData() {
+                const refundsTableBody = document.getElementById('refundsTableBody');
+                const totalRefundsCountElement = document.getElementById('totalRefundsCount');
+                const pendingRefundsCountElement = document.getElementById('pendingRefundsCount');
+
+                if (!refundsTableBody || !totalRefundsCountElement || !pendingRefundsCountElement) {
+                    console.warn("Refunds page elements not found. Skipping data load.");
+                    return;
+                }
+
+                totalRefundsCountElement.textContent = 'กำลังโหลด...';
+                pendingRefundsCountElement.textContent = 'กำลังโหลด...';
+                refundsTableBody.innerHTML = '<tr><td colspan="11" class="no-data-message">กำลังโหลดข้อมูลการคืนเงิน...</td></tr>'; // Updated colspan to 11
+
+                totalRefundsCountElement.classList.add('loading-text');
+                pendingRefundsCountElement.classList.add('loading-text');
+
+                try {
+                    const refundsSnapshot = await db.collection('Refunds').orderBy('cancellationTimestamp', 'desc').get();
+                    let totalRefunds = 0;
+                    let pendingRefunds = 0;
+                    let tableRowsHtml = '';
+
+                    if (refundsSnapshot.empty) {
+                        tableRowsHtml = '<tr><td colspan="11" class="no-data-message">ไม่พบข้อมูลการคืนเงิน</td></tr>'; // Updated colspan to 11
+                    } else {
+                        // Fetch all client profiles once to create a map for efficient lookup
+                        const clientProfilesSnapshot = await db.collection('ClientProfile').get();
+                        const clientProfileMap = new Map();
+                        clientProfilesSnapshot.forEach(doc => {
+                            clientProfileMap.set(doc.id, doc.data());
+                        });
+
+
+                        for (const doc of refundsSnapshot.docs) { // Use for...of for async/await
+                            const data = doc.data();
+                            totalRefunds++;
+                            // Changed to check for 'pending' as per user's request
+                            if (data.refundStatus === 'pending') {
+                                pendingRefunds++;
+                            }
+
+                            const refundId = doc.id;
+                            const orderId = data.orderId || 'N/A';
+                            const userId = data.userId || 'N/A';
+                            const refundDate = data.cancellationTimestamp ? new Date(data.cancellationTimestamp.toDate()).toLocaleDateString('th-TH') : 'N/A';
+                            const amount = parseFloat(data.amount || 0).toLocaleString('th-TH');
+                            const status = data.refundStatus || 'ไม่ระบุ';
+
+                            let clientFirstName = 'N/A';
+                            let clientLastName = 'N/A';
+                            let clientBankName = 'N/A';
+                            let clientAccountNumber = 'N/A';
+
+                            // Look up client profile in the map
+                            if (userId !== 'N/A' && clientProfileMap.has(userId)) {
+                                const clientData = clientProfileMap.get(userId);
+                                clientFirstName = clientData.firstName || 'ไม่ระบุ';
+                                clientLastName = clientData.lastName || 'ไม่ระบุ';
+                                clientBankName = clientData.bankName || 'ไม่ระบุ';
+                                clientAccountNumber = clientData.accountNumber || 'ไม่ระบุ';
+                            }
+
+
+                            let actionButtonHtml = '';
+                            if (status === 'pending') {
+                                actionButtonHtml = `<button class="approve-refund-btn"
+                                                        data-refund-id="${refundId}"
+                                                        data-order-id="${orderId}"
+                                                        data-user-id="${userId}"
+                                                        data-first-name="${clientFirstName}"
+                                                        data-last-name="${clientLastName}"
+                                                        data-bank-name="${clientBankName}"
+                                                        data-account-number="${clientAccountNumber}"
+                                                        data-amount="${amount}"
+                                                        data-refund-date="${refundDate}"
+                                                        >อนุมัติการคืนเงิน</button>`;
+                            } else {
+                                // Display status with conditional styling
+                                actionButtonHtml = `<span style="color: ${status === 'คืนเงินสำเร็จแล้ว' ? 'green' : (status === 'ยกเลิก' ? 'red' : 'inherit')}">${status}</span>`;
+                            }
+
+
+                            tableRowsHtml += `
+                                <tr>
+                                    <td>${userId}</td>
+                                    <td>${orderId}</td>
+                                    <td>${clientFirstName}</td>
+                                    <td>${clientLastName}</td>
+                                    <td>${clientBankName}</td>
+                                    <td>${clientAccountNumber}</td>
+                                    <td>${refundDate}</td>
+                                    <td>${amount}</td>
+                                    <td>${status}</td>
+                                    <td>${actionButtonHtml}</td>
+                                </tr>
+                            `;
+                        }
+                    }
+
+                    refundsTableBody.innerHTML = tableRowsHtml;
+                    totalRefundsCountElement.textContent = totalRefunds.toLocaleString('th-TH');
+                    pendingRefundsCountElement.textContent = pendingRefunds.toLocaleString('th-TH');
+
+                    // Add event listeners for the dynamically created buttons
+                    refundsTableBody.querySelectorAll('.approve-refund-btn').forEach(button => {
+                        button.addEventListener('click', (event) => {
+                            const btn = event.target;
+                            modalRefundId.textContent = (btn.dataset.refundId.length > 8 ? btn.dataset.refundId.substring(0, 8) + '...' : btn.dataset.refundId);
+                            modalRefundOrderId.textContent = btn.dataset.orderId;
+                            modalRefundUserId.textContent = btn.dataset.userId;
+                            modalClientFirstName.textContent = btn.dataset.firstName;
+                            modalClientLastName.textContent = btn.dataset.lastName;
+                            modalClientBankName.textContent = btn.dataset.bankName;
+                            modalClientAccountNumber.textContent = btn.dataset.accountNumber;
+                            modalRefundAmount.textContent = btn.dataset.amount;
+                            modalRefundDate.textContent = btn.dataset.refundDate;
+
+                            // Store refundId on the confirm button for later use
+                            confirmRefundApprovalBtn.dataset.refundId = btn.dataset.refundId; // Use confirmRefundApprovalBtn here
+
+                            approveRefundModal.classList.add('open');
+                            if (refundAlertBox) refundAlertBox.innerHTML = ''; // Clear previous alerts
+                            // NEW: Clear refund slip input and preview when modal opens
+                            if (refundSlipUploadInput) refundSlipUploadInput.value = '';
+                            if (refundSlipPreviewImg) {
+                                if (refundSlipPreviewImg.src.startsWith('blob:')) {
+                                    URL.revokeObjectURL(refundSlipPreviewImg.src);
+                                }
+                                refundSlipPreviewImg.src = '#';
+                                refundSlipPreviewImg.style.display = 'none';
+                            }
+                        });
+                    });
+
+
+                    // ลบ class loading
+                    totalRefundsCountElement.classList.remove('loading-text');
+                    pendingRefundsCountElement.classList.remove('loading-text');
+
+                    // กำหนดสี
+                    totalRefundsCountElement.style.color = '#1e88e5'; // Primary color
+                    pendingRefundsCountElement.style.color = '#607d8b'; // Blue-grey for pending
+
+                } catch (error) {
+                    console.error("Error loading refunds data:", error);
+                    refundsTableBody.innerHTML = '<tr><td colspan="11" class="no-data-message error-text">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>'; // Updated colspan to 11
+                    totalRefundsCountElement.textContent = 'ข้อผิดพลาด';
+                    pendingRefundsCountElement.textContent = 'ข้อผิดพลาด';
+
+                    // เพิ่ม class error
+                    totalRefundsCountElement.classList.add('error-text');
+                    pendingRefundsCountElement.classList.add('error-text');
+                    
+                    // ลบ class loading
+                    totalRefundsCountElement.classList.remove('loading-text');
+                    pendingRefundsCountElement.classList.remove('loading-text');
+
+                    // รีเซ็ตสีเป็นสีข้อผิดพลาด
+                    totalRefundsCountElement.style.color = '#d32f2f';
+                    pendingRefundsCountElement.style.color = '#d32f2f';
+                }
+            }
+
+
+    </script>
+</body>
+</html>

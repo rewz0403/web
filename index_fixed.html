@@ -1,0 +1,41 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fixed Admin Dashboard</title>
+</head>
+<body>
+  <main class="content" id="content">กำลังโหลดเนื้อหา...</main>
+
+  <script>
+    // ตัวอย่างย่อ: โค้ดโหลด main.html และแสดงผลใน content
+    async function loadDashboardHtmlContent() {
+      try {
+        const response = await fetch('main.html');
+        if (!response.ok) throw new Error("ไม่สามารถโหลด main.html");
+        const htmlContent = await response.text();
+        const container = document.getElementById('content');
+        if (container) {
+          container.innerHTML = htmlContent;
+          initializeDashboardFeatures();
+        }
+      } catch (err) {
+        console.error(err);
+        const container = document.getElementById('content');
+        if (container) container.innerHTML = 'โหลดข้อมูลล้มเหลว: ' + err.message;
+      }
+    }
+
+    function initializeDashboardFeatures() {
+      console.log('initializeDashboardFeatures เรียกทำงานตามปกติ');
+      // สมมุติเรียก updateDateTime, loadUserCounts
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadDashboardHtmlContent();
+    });
+  </script>
+</body>
+</html>

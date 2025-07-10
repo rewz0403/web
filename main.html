@@ -1,0 +1,113 @@
+<div id="main-content">
+    <style>
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            padding: 25px;
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 150px;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }
+        .card-title {
+            font-size: 1.1em;
+            color: #555;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        .card-value {
+            font-size: 2.8em;
+            font-weight: 700;
+            color: #1e88e5; /* Primary color */
+            margin-top: 10px;
+            line-height: 1; /* To prevent extra spacing */
+        }
+        .card-icon {
+            font-size: 3.5em;
+            color: #ffc107; /* Accent color */
+            margin-bottom: 10px;
+        }
+        .loading-text {
+            color: #999;
+        }
+        .error-text {
+            color: #d32f2f; /* Red for error */
+        }
+        /* Style for net income specific */
+        .net-income-card .card-value {
+             font-size: 2.5em; /* Slightly smaller for currency */
+        }
+
+        /* New styles for Omise and Paid amounts */
+        .income-detail-card .card-value {
+            font-size: 2.2em; /* Smaller for detailed amounts */
+            color: #4CAF50; /* Green for income */
+        }
+        .expense-detail-card .card-value {
+            font-size: 2.2em; /* Smaller for detailed amounts */
+            color: #f44336; /* Red for expenses */
+        }
+        /* Added style for refunded amount card - you can adjust color if needed */
+        .refund-detail-card .card-value {
+            font-size: 2.2em; /* Smaller for detailed amounts */
+            color: #ff9800; /* Orange for refunds (can be adjusted) */
+        }
+
+    </style>
+
+    <h2 style="font-size: 2.2em; color: #1e88e5; margin-bottom: 20px;">สรุปภาพรวมระบบ AccessAble</h2>
+    <p style="font-size: 1.1em; color: #666; margin-bottom: 30px;">
+        วันที่และเวลาปัจจุบัน: <strong id="datetime" style="color: #333;">กำลังโหลด...</strong>
+    </p>
+
+    <div class="dashboard-grid">
+        <div class="card">
+            <i class="mdi mdi-account-group card-icon"></i>
+            <div class="card-title">จำนวนผู้หางานทั้งหมด</div>
+            <div class="card-value" id="freelancerCount">0</div>
+        </div>
+        <div class="card">
+            <i class="mdi mdi-briefcase card-icon"></i>
+            <div class="card-title">จำนวนผู้จ้างงานทั้งหมด</div>
+            <div class="card-value" id="clientCount">0</div>
+        </div>
+        <div class="card">
+            <i class="mdi mdi-school card-icon"></i>
+            <div class="card-title">จำนวนหน่วยงานฝึกอบรมทั้งหมด</div>
+            <div class="card-value" id="trainerCount">0</div>
+        </div>
+        <div class="card net-income-card">
+            <i class="mdi mdi-finance card-icon"></i>
+            <div class="card-title">รายได้สุทธิของระบบ</div>
+            <div class="card-value" id="netIncome">0.00 THB</div>
+        </div>
+        <div class="card income-detail-card">
+            <i class="mdi mdi-cash-plus card-icon" style="color: #4CAF50;"></i>
+            <div class="card-title">ยอดรวมที่รับจาก Omise </div>
+            <div class="card-value" id="totalOmiseIncome">0.00 THB</div>
+        </div>
+        <div class="card expense-detail-card">
+            <i class="mdi mdi-cash-minus card-icon" style="color: #f44336;"></i>
+            <div class="card-title">ยอดรวมที่จ่ายให้ฟรีแลนซ์ </div>
+            <div class="card-value" id="totalFreelancerPaid">0.00 THB</div>
+        </div>
+        <div class="card refund-detail-card">
+            <i class="mdi mdi-cash-refund card-icon" style="color: #ff9800;"></i> <div class="card-title">ยอดรวมเงินที่คืนแล้ว</div>
+            <div class="card-value" id="totalRefundedAmount">0.00 THB</div>
+        </div>
+    </div>
+</div>

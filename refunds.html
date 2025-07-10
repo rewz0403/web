@@ -1,0 +1,184 @@
+<div class="page-content" id="refunds-page-content">
+    <style>
+        /* สไตล์สำหรับหน้าการคืนเงินโดยเฉพาะ (ถ้ามี) */
+        .refunds-table-container {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-top: 30px;
+        }
+        .refunds-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .refunds-table th, .refunds-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .refunds-table th {
+            background-color: #f2f2f2;
+            color: #555;
+            font-weight: 600;
+        }
+        .refunds-table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .refunds-table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+        .no-data-message {
+            text-align: center;
+            color: #777;
+            padding: 20px;
+            font-style: italic;
+        }
+        /* Loading and error states */
+        .loading-text { color: #999; }
+        .error-text { color: #d32f2f; }
+    </style>
+
+    <h2 style="font-size: 2em; color: #3949ab; margin-bottom: 25px;">
+        <i class="mdi mdi-cash-refund" style="margin-right: 10px;"></i>
+        การจัดการการคืนเงิน
+    </h2>
+
+    <p style="font-size: 1.1em; color: #666; margin-bottom: 20px;">
+        สรุปและจัดการข้อมูลการคืนเงินทั้งหมดในระบบ
+    </p>
+
+    <div class="refunds-summary-cards dashboard-grid">
+        <div class="card">
+            <i class="mdi mdi-cash-multiple card-icon" style="color: #ff9800;"></i>
+            <div class="card-title">จำนวนรายการคืนเงินทั้งหมด</div>
+            <div class="card-value" id="totalRefundsCount">กำลังโหลด...</div>
+        </div>
+        <div class="card">
+            <i class="mdi mdi-clock-outline card-icon" style="color: #607d8b;"></i>
+            <div class="card-title">รายการที่รอดำเนินการ</div>
+            <div class="card-value" id="pendingRefundsCount">กำลังโหลด...</div>
+        </div>
+        </div>
+
+    <div class="refunds-table-container">
+        <h3>รายการคืนเงินล่าสุด</h3>
+        <table class="refunds-table">
+            <thead>
+                <tr>
+                    <th>User ID</th>  
+                    <th>Order ID</th> 
+                    <th>ชื่อ</th>
+                     <th>นามสกุล</th>
+                     <th>ธนาคาร</th>
+                     <th>หมายเลขบัญชี</th>
+
+                     <th>วันที่ยกเลิก</th>
+                    <th>จำนวนเงิน (THB)</th>
+                    <th>สถานะ</th>
+                    <th>รายละเอียด</th>
+                </tr>
+            </thead>
+            <tbody id="refundsTableBody">
+                <tr><td colspan="7" class="no-data-message">กำลังโหลดข้อมูลการคืนเงิน...</td></tr>
+            </tbody>
+        </table>
+        </div>
+</div>
+
+<script>
+    // JavaScript สำหรับหน้านี้โดยเฉพาะ (จะถูกโหลดเมื่อหน้านี้ถูกแสดง)
+    // สามารถใช้ async function เพื่อดึงข้อมูลจาก Firestore มาแสดงในตาราง
+    async function loadRefundsData() {
+        const refundsTableBody = document.getElementById('refundsTableBody');
+        const totalRefundsCountElement = document.getElementById('totalRefundsCount');
+        const pendingRefundsCountElement = document.getElementById('pendingRefundsCount');
+
+        if (!refundsTableBody || !totalRefundsCountElement || !pendingRefundsCountElement) {
+            console.warn("Refunds page elements not found. Skipping data load.");
+            return;
+        }
+
+        // ตั้งค่าเริ่มต้นเป็น 'กำลังโหลด...'
+        totalRefundsCountElement.textContent = 'กำลังโหลด...';
+        pendingRefundsCountElement.textContent = 'กำลังโหลด...';
+        refundsTableBody.innerHTML = '<tr><td colspan="7" class="no-data-message">กำลังโหลดข้อมูลการคืนเงิน...</td></tr>'; // อัปเดต colspan
+
+        // เพิ่ม class loading
+        totalRefundsCountElement.classList.add('loading-text');
+        pendingRefundsCountElement.classList.add('loading-text');
+
+        try {
+            // ดึงข้อมูลการคืนเงินทั้งหมด
+            // สามารถเพิ่ม .orderBy('cancellationTimestamp', 'desc') เพื่อเรียงตามวันที่ยกเลิก/คืนเงินได้
+            const refundsSnapshot = await db.collection('Refunds').orderBy('cancellationTimestamp', 'desc').get();
+            let totalRefunds = 0;
+            let pendingRefunds = 0;
+            let tableRowsHtml = '';
+
+            if (refundsSnapshot.empty) {
+                tableRowsHtml = '<tr><td colspan="7" class="no-data-message">ไม่พบข้อมูลการคืนเงิน</td></tr>'; // อัปเดต colspan
+            } else {
+                refundsSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    totalRefunds++;
+                    if (data.refundStatus === 'รอดำเนินการ') { // สมมติสถานะ 'รอดำเนินการ'
+                        pendingRefunds++;
+                    }
+
+                    const refundId = doc.id;
+                    const orderId = data.orderId || 'N/A'; // ดึงค่า orderId
+                    const userId = data.userId || 'N/A';   // ดึงค่า userId
+                    // ใช้ cancellationTimestamp แทน timestamp เดิม
+                    const refundDate = data.cancellationTimestamp ? new Date(data.cancellationTimestamp.toDate()).toLocaleDateString('th-TH') : 'N/A';
+                    const amount = parseFloat(data.amount || 0).toLocaleString('th-TH');
+                    const status = data.refundStatus || 'ไม่ระบุ';
+                    const detailLink = `<a href="#/refunds/${refundId}" onclick="viewRefundDetail('${refundId}')">ดูรายละเอียด</a>`; // ตัวอย่างลิงก์
+
+                    tableRowsHtml += `
+                        <tr>
+                            <td>${userId}</td>
+                            <td>${orderId}</td>
+                            <td>${refundDate}</td>
+                            <td>${amount}</td>
+                            <td>${status}</td>
+                            <td>${detailLink}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            refundsTableBody.innerHTML = tableRowsHtml;
+            totalRefundsCountElement.textContent = totalRefunds.toLocaleString('th-TH');
+            pendingRefundsCountElement.textContent = pendingRefunds.toLocaleString('th-TH');
+
+            // ลบ class loading
+            totalRefundsCountElement.classList.remove('loading-text');
+            pendingRefundsCountElement.classList.remove('loading-text');
+
+            // กำหนดสี
+            totalRefundsCountElement.style.color = '#1e88e5'; // Primary color
+            pendingRefundsCountElement.style.color = '#607d8b'; // Blue-grey for pending
+
+        } catch (error) {
+            console.error("Error loading refunds data:", error);
+            refundsTableBody.innerHTML = '<tr><td colspan="7" class="no-data-message error-text">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>'; // อัปเดต colspan
+            totalRefundsCountElement.textContent = 'ข้อผิดพลาด';
+            pendingRefundsCountElement.textContent = 'ข้อผิดพลาด';
+
+            // เพิ่ม class error
+            totalRefundsCountElement.classList.add('error-text');
+            pendingRefundsCountElement.classList.add('error-text');
+            
+            // ลบ class loading
+            totalRefundsCountElement.classList.remove('loading-text');
+            pendingRefundsCountElement.classList.remove('loading-text');
+
+            // รีเซ็ตสีเป็นสีข้อผิดพลาด
+            totalRefundsCountElement.style.color = '#d32f2f';
+            pendingRefundsCountElement.style.color = '#d32f2f';
+        }
+    }
+
+</script>

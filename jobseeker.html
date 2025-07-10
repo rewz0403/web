@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>รายชื่อผู้หางาน</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #1e88e5;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>รายชื่อผู้หางาน</h1>
+  <table id="jobseekerTable">
+    <thead>
+      <tr>
+        <th>ชื่อ</th>
+        <th>นามสกุล</th>
+        <th>เบอร์โทรศัพท์</th>
+        <th>หมายเลขบัตรประชาชน</th>
+        <th>ชื่อธนาคาร</th>
+        <th>เลขที่บัญชี</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- รายชื่อจะแสดงที่นี่ -->
+    </tbody>
+  </table>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // ตั้งค่า Firebase ของคุณที่นี่
+    const firebaseConfig = {
+      apiKey: "AIzaSyC6oAJBTA4gROSlMspf08RXuIS2zlvKbOw",
+      authDomain: "access-able-demo.firebaseapp.com",
+      databaseURL: "https://access-able-demo-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "access-able-demo",
+      storageBucket: "access-able-demo.appspot.com",
+      messagingSenderId: "973291779516",
+      appId: "1:973291779516:web:4263a29f32ba7ab731e7b9",
+      measurementId: "G-8KLJC4L6C3"
+    };
+
+    // เริ่ม Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const tableBody = document.querySelector('#jobseekerTable tbody');
+
+    // ดึงข้อมูลจาก collection FreelanceProfile
+    db.collection('FreelanceProfile').get()
+      .then(snapshot => {
+        if (snapshot.empty) {
+          tableBody.innerHTML = '<tr><td colspan="6">ไม่พบข้อมูลผู้หางาน</td></tr>';
+          return;
+        }
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const tr = document.createElement('tr');
+
+          tr.innerHTML = `
+            <td>${data.firstName || ''}</td>
+            <td>${data.lastName || ''}</td>
+            <td>${data.phone || ''}</td>
+            <td>${data.idCard || ''}</td>
+            <td>${data.bankName || ''}</td>
+            <td>${data.accountNumber || ''}</td>
+          `;
+
+          tableBody.appendChild(tr);
+        });
+      })
+      .catch(error => {
+        console.error("เกิดข้อผิดพลาดในการดึงข้อมูล: ", error);
+        tableBody.innerHTML = '<tr><td colspan="6">เกิดข้อผิดพลาดในการดึงข้อมูล</td></tr>';
+      });
+  </script>
+</body>
+</html>
