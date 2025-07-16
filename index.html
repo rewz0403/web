@@ -462,9 +462,12 @@
         </div>
     </div>
 
+    
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script> 
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     
     <script>
@@ -473,7 +476,7 @@
             authDomain: "access-able-demo.firebaseapp.com",
             databaseURL: "https://access-able-demo-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "access-able-demo",
-            storageBucket: "access-able-demo.appspot.com",
+            storageBucket: "access-able-demo.firebasestorage.app",
             messagingSenderId: "973291779516",
             appId: "1:973291779516:web:4263a29f32ba7ab731e7b9",
             measurementId: "G-8KLJC4L6C3"
@@ -482,6 +485,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
+        const storage = firebase.storage(); // Initialize Firebase Storage
 
 
         const content = document.getElementById('content');
@@ -599,7 +603,6 @@
         }
         
 
-
         if (slipUploadInput && slipPreviewImg) {
             slipUploadInput.addEventListener('change', function(event) {
                 const file = event.target.files[0];
@@ -615,19 +618,56 @@
             });
         }
 
-        // Event Listener สำหรับปุ่มยืนยันการจ่ายเงิน (ใน modal) - แก้ไขเพื่อไม่ให้อัปโหลดสลิปจริง
+        /**
+         * Generic function to upload a file to Firebase Storage.
+         * @param {File} file - The file to upload.
+         * @param {string} path - The path in Firebase Storage (e.g., 'images/profile' or 'slips/payment').
+         * @param {Function} onProgress - Callback for upload progress (receives percentage).
+         * @returns {Promise<{url: string, path: string}>} - Resolves with the download URL and full storage path.
+         */
+        async function uploadFileToFirebase(file, path, onProgress = () => {}) {
+            if (!file) {
+                throw new Error("No file selected for upload.");
+            }
+
+            const storageRef = storage.ref(path + '/' + file.name);
+            const uploadTask = storageRef.put(file);
+
+            return new Promise((resolve, reject) => {
+                uploadTask.on(
+                    'state_changed',
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        onProgress(progress);
+                    },
+                    (error) => {
+                        console.error("Upload failed:", error);
+                        reject(error);
+                    },
+                    async () => {
+                        try {
+                            const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                            resolve({ url: downloadURL, path: storageRef.fullPath });
+                        } catch (error) {
+                            console.error("Failed to get download URL:", error);
+                            reject(error);
+                        }
+                    }
+                );
+            });
+        }
+
+        // Event Listener สำหรับปุ่มยืนยันการจ่ายเงิน (ใน modal) - แก้ไขเพื่อให้อัปโหลดสลิปจริงไป Firebase Storage
         if (confirmPayBtn) {
             confirmPayBtn.addEventListener('click', async () => {
                 const jobId = confirmPayBtn.dataset.jobId;
                 const freelancerId = confirmPayBtn.dataset.freelancerId;
-                const amount = confirmPayBtn.dataset.amount;
-                const slipFile = slipUploadInput.files[0]; // ยังคงรับไฟล์เพื่อแสดงพรีวิว
+                const slipFile = slipUploadInput?.files?.[0]; // ป้องกัน undefined
 
                 modalAlertBox.innerHTML = '';
 
                 if (!freelancerId || !jobId) {
-                    showAlert('ข้อผิดพลาด: ไม่สามารถระบุข้อมูลผู้หางานหรืองานได้ กรุณาลองใหม่อีกครั้ง', false, modalAlertBox);
-                    console.error('Error: Missing freelancerId or jobId in confirmPayBtn.dataset', { freelancerId, jobId });
+                    showAlert('ไม่พบข้อมูลผู้จ้างหรืองาน', false, modalAlertBox);
                     return;
                 }
 
@@ -637,30 +677,44 @@
                 }
 
                 confirmPayBtn.disabled = true;
-                confirmPayBtn.textContent = 'กำลังดำเนินการ...';
+                confirmPayBtn.textContent = 'กำลังอัปโหลด...';
 
                 try {
-                    // *** ส่วนนี้คือการเปลี่ยนแปลงสำคัญ: ไม่มีการอัปโหลดไฟล์จริงไปที่ Firebase Storage ***
-                    // เราจะแค่ทำการอัปเดตสถานะใน Firestore เท่านั้น
-                    // และตั้งค่า paymentSlipUrl เป็น null หรือสตริงว่าง เพื่อระบุว่าไม่มีสลิปจริง
-                    const paymentSlipUrlToStore = ''; // หรือ null;
+                    const uploadPath = `PayFreelance/${freelancerId}/${jobId}`;
+                    const { url, path } = await uploadFileToFirebase(
+                        slipFile,
+                        uploadPath,
+                        (progress) => {
+                            confirmPayBtn.textContent = `กำลังอัปโหลด (${Math.round(progress)}%)...`;
+                        }
+                    );
 
-                    const jobRef = db.collection('FreelanceProfile').doc(freelancerId)
-                                      .collection('Jobsuccessful').doc(jobId);
+                    const user = firebase.auth().currentUser;
+                    if (!user) {
+                        showAlert('กรุณาล็อกอินก่อนดำเนินการ', false, modalAlertBox);
+                        return;
+                    }
+
+                    const jobRef = db
+                        .collection('FreelanceProfile')
+                        .doc(freelancerId)
+                        .collection('Jobsuccessful')
+                        .doc(jobId);
+
                     await jobRef.update({
                         status: 'จ่ายเงินสำเร็จแล้ว',
                         paidAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        paymentSlipUrl: paymentSlipUrlToStore // อัปเดตด้วยค่าว่าง/null
+                        paymentSlipPath: path, // เก็บ full path
+                        paymentSlipUrl: url // เก็บ download URL
                     });
 
-                    showAlert('สถานะการจ่ายเงินอัปเดตสำเร็จแล้ว', true, modalAlertBox);
-                    alert('สถานะการจ่ายเงินอัปเดตสำเร็จแล้ว');
+                    showAlert('อัปเดตสถานะการจ่ายเงินสำเร็จแล้ว', true, modalAlertBox);
+                    alert('อัปเดตสำเร็จ');
                     closePaymentModal();
-                    loadPayFreelancerPage(); // โหลดข้อมูลใหม่เพื่ออัปเดตสถานะ
-
-                } catch (error) {
-                    console.error('เกิดข้อผิดพลาดในการอัปเดตสถานะการจ่ายเงิน:', error);
-                    showAlert('เกิดข้อผิดพลาดในการอัปเดตสถานะการจ่ายเงิน: ' + error.message, false, modalAlertBox);
+                    loadPayFreelancerPage(); // Assuming this function reloads the relevant data
+                } catch (err) {
+                    console.error('Error in payment confirm:', err);
+                    showAlert('เกิดข้อผิดพลาด: ' + err.message, false, modalAlertBox);
                 } finally {
                     confirmPayBtn.disabled = false;
                     confirmPayBtn.textContent = 'ยืนยันการจ่ายเงิน';
@@ -668,44 +722,51 @@
             });
         }
 
-        // NEW: Event Listener for Confirm Refund Approval Button
-        if (confirmRefundApprovalBtn) { // Using confirmRefundApprovalBtn
+        // ฟังก์ชันอนุมัติคืนเงิน - แก้ไขเพื่อให้อัปโหลดสลิปจริงไป Firebase Storage
+        if (confirmRefundApprovalBtn) {
             confirmRefundApprovalBtn.addEventListener('click', async () => {
                 const refundId = confirmRefundApprovalBtn.dataset.refundId;
-                const refundSlipFile = refundSlipUploadInput.files[0]; // Get the uploaded file
+                const refundSlipFile = refundSlipUploadInput?.files?.[0];
+
+                refundAlertBox.innerHTML = '';
 
                 if (!refundId) {
-                    showAlert('ข้อผิดพลาด: ไม่พบ ID การคืนเงิน', false, refundAlertBox);
+                    showAlert('ไม่พบข้อมูลการคืนเงิน', false, refundAlertBox);
                     return;
                 }
 
-                // NEW: Check if a slip file is selected for refunds
                 if (!refundSlipFile) {
-                    showAlert('กรุณาแนบรูปสลิปการคืนเงิน', false, refundAlertBox);
+                    showAlert('กรุณาแนบสลิปการคืนเงิน', false, refundAlertBox);
                     return;
                 }
-
 
                 confirmRefundApprovalBtn.disabled = true;
-                confirmRefundApprovalBtn.textContent = 'กำลังดำเนินการ...';
+                confirmRefundApprovalBtn.textContent = 'กำลังอัปโหลด...';
 
                 try {
-                    // Explicitly set refundSlipUrl to an empty string as per user request
-                    const refundSlipUrlToStore = '';
-                    // Update Firestore document
+                    const uploadPath = `Refund/${refundId}`;
+                    const { url, path } = await uploadFileToFirebase(
+                        refundSlipFile,
+                        uploadPath,
+                        (progress) => {
+                            confirmRefundApprovalBtn.textContent = `กำลังอัปโหลด (${Math.round(progress)}%)...`;
+                        }
+                    );
+
                     await db.collection('Refunds').doc(refundId).update({
-                        refundStatus: 'คืนเงินสำเร็จแล้ว', // Update status to 'คืนเงินสำเร็จแล้ว'
+                        refundStatus: 'คืนเงินสำเร็จแล้ว',
                         approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        refundSlipUrl: refundSlipUrlToStore // Save empty URL
+                        refundSlipPath: path, // เก็บ full path
+                        refundSlipUrl: url // เก็บ download URL
                     });
 
-                    showAlert('อนุมัติการคืนเงินสำเร็จแล้ว!', true, refundAlertBox);
-                    alert('อนุมัติการคืนเงินสำเร็จแล้ว!');
+                    showAlert('คืนเงินสำเร็จ!', true, refundAlertBox);
+                    alert('อนุมัติการคืนเงินเรียบร้อย');
                     closeRefundModal();
-                    loadRefundsData(); // Reload table data
-                } catch (error) {
-                    console.error('Error approving refund:', error);
-                    showAlert('เกิดข้อผิดพลาดในการอนุมัติ: ' + error.message, false, refundAlertBox);
+                    loadRefundsData(); // Assuming this function reloads the relevant data
+                } catch (err) {
+                    console.error('Error in refund confirm:', err);
+                    showAlert('เกิดข้อผิดพลาด: ' + err.message, false, refundAlertBox);
                 } finally {
                     confirmRefundApprovalBtn.disabled = false;
                     confirmRefundApprovalBtn.textContent = 'ยืนยันการอนุมัติ';

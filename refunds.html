@@ -156,8 +156,8 @@
                 const userId = data.userId || 'N/A';
                 const refundDate = data.cancellationTimestamp ? new Date(data.cancellationTimestamp.toDate()).toLocaleDateString('th-TH') : 'N/A';
                 const amount = parseFloat(data.amount || 0).toLocaleString('th-TH');
-                const status = data.refundStatus || 'ไม่ระบุ';
-
+                const refundSlipUrl = data.refundSlipUrl || '';
+const safeSlipUrl = refundSlipUrl && refundSlipUrl.includes('?') ? refundSlipUrl : refundSlipUrl + '?alt=media';
                 if (status === 'pending') pendingRefunds++;
 
                 let clientFirstName = 'N/A';
@@ -191,19 +191,23 @@
                 }
 
                 tableRowsHtml += `
-                    <tr>
-                        <td>${userId}</td>
-                        <td>${orderId}</td>
-                        <td>${clientFirstName}</td>
-                        <td>${clientLastName}</td>
-                        <td>${clientBankName}</td>
-                        <td>${clientAccountNumber}</td>
-                        <td>${refundDate}</td>
-                        <td>${amount}</td>
-                        <td>${status}</td>
-                        <td>${actionButtonHtml}</td>
-                    </tr>
-                `;
+<tr>
+    <td>${userId}</td>
+    <td>${orderId}</td>
+    <td>${clientFirstName}</td>
+    <td>${clientLastName}</td>
+    <td>${clientBankName}</td>
+    <td>${clientAccountNumber}</td>
+    <td>${refundDate}</td>
+    <td>${amount}</td>
+    <td>${status}</td>
+    <td>
+        ${status === 'pending' ? actionButtonHtml : `
+            ${safeSlipUrl ? `<a href="${safeSlipUrl}" target="_blank"><img src="${safeSlipUrl}" style="max-height:50px;" /></a>` : 'ไม่มีสลิป'}
+        `}
+    </td>
+</tr>
+`;
             }
         }
 
